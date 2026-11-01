@@ -22,7 +22,7 @@ public static class ItemNames
             case ItemId.Flashlight: return "Flashlight";
             case ItemId.FloorboardPlank: return "Plank";
             case ItemId.Splinter: return "Splinter";
-            case ItemId.ClosetKey: return "Closet Key";
+            case ItemId.ClosetKey: return "Key";
             case ItemId.JailKey: return "Jail Key";
             case ItemId.Axe: return "Axe";
             default: return "";

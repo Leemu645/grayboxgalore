@@ -67,7 +67,12 @@ public class Flashlight : MonoBehaviour
 
     public bool HasFlashlight => owned;
 
-    public bool IsOn => owned && turnedOn;
+    public bool IsOn => owned && turnedOn && IsSelected();
+
+    bool IsSelected()
+    {
+        return owned && Inventory.Instance != null && Inventory.Instance.Selected == ItemId.Flashlight;
+    }
 
     /// <summary>
     /// The player now has the flashlight. The beam stays off until they press F.
@@ -92,12 +97,15 @@ public class Flashlight : MonoBehaviour
         if (PlayerControl.Suspended || !owned || spot == null)
             return;
 
-        if (WasTogglePressed())
+        // The beam and the model only exist in the hand while Flashlight is selected.
+        // turnedOn is remembered, so switching away and back keeps the last state.
+        if (IsSelected() && WasTogglePressed())
         {
             turnedOn = !turnedOn;
-            RefreshVisuals();
             onToggle?.Invoke();
         }
+
+        RefreshVisuals();
 
         if (!spot.enabled)
             return;
@@ -263,12 +271,13 @@ public class Flashlight : MonoBehaviour
 
     void RefreshVisuals()
     {
+        bool inHand = IsSelected();
         if (heldModel != null)
-            heldModel.SetActive(owned);
+            heldModel.SetActive(inHand);
 
         if (spot != null)
         {
-            spot.enabled = owned && turnedOn;
+            spot.enabled = inHand && turnedOn;
             if (spot.enabled)
                 spot.intensity = intensity;
         }

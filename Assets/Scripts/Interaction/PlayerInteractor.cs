@@ -143,7 +143,11 @@ public class PlayerInteractor : MonoBehaviour
         {
             holdTime = 0f;
             SetHoldVisible(false);
-            if (lookedAt != null && WasInteractPressed())
+            bool click = Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame;
+            bool useKey = inputReady && interactAction.WasPressedThisFrame();
+            bool axeTookClick = click && AxeSwing.Instance != null && AxeSwing.Instance.TryConsumeAttack();
+
+            if (lookedAt != null && (useKey || (click && !axeTookClick)))
                 Use(lookedAt);
         }
     }
@@ -188,14 +192,6 @@ public class PlayerInteractor : MonoBehaviour
         lookedAt.Interact();
     }
 
-    bool WasInteractPressed()
-    {
-        if (inputReady && interactAction.WasPressedThisFrame())
-            return true;
-
-        return Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame;
-    }
-
     Interactable FindLookTarget()
     {
         if (viewCamera == null)
@@ -235,16 +231,12 @@ public class PlayerInteractor : MonoBehaviour
         if (promptLabel == null)
             return;
 
-        bool show = target != null && target.isActiveAndEnabled;
+        bool show = target != null && target.isActiveAndEnabled && target.ShowsPrompt;
         if (promptLabel.gameObject.activeSelf != show)
             promptLabel.gameObject.SetActive(show);
 
         if (show)
-        {
-            HoldInteractable hold = target.GetComponent<HoldInteractable>();
-            string verb = hold != null && hold.AcceptingHolds ? "Hold: " : "E: ";
-            promptLabel.text = verb + target.Prompt;
-        }
+            promptLabel.text = "E: " + target.Prompt;
     }
 
     public void ShowMessage(string message)

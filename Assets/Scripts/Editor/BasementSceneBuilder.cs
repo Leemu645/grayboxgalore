@@ -81,6 +81,11 @@ public static class BasementSceneBuilder
         player.AddComponent<Inventory>();
         player.AddComponent<InventoryHud>();
         player.AddComponent<HookMinigame>();
+        AxeSwing axe = player.AddComponent<AxeSwing>();
+        SerializedObject axeObject = new SerializedObject(axe);
+        axeObject.FindProperty("handleMaterial").objectReferenceValue = palette.wood;
+        axeObject.FindProperty("headMaterial").objectReferenceValue = palette.metal;
+        axeObject.ApplyModifiedPropertiesWithoutUndo();
         BuildInteractionUi(player, actions);
 
         EditorSceneManager.MarkSceneDirty(scene);
@@ -147,20 +152,24 @@ public static class BasementSceneBuilder
     static void BuildProps(Transform parent, Palette palette)
     {
         BuildFurnace(parent, palette, new Vector3(-4.65f, 0f, 1.9f));
-        // Long side runs along the bars. The near edge sits a short reach beyond them.
-        BuildWorkbench(parent, palette, new Vector3(1.15f, 0f, 4.42f));
-        BuildJailKey(parent, palette, new Vector3(1.3f, 1.02f, 4.62f));
+        // Rotated 90 degrees so the long side runs away from the bars and the
+        // doorway stays clear. The near end is still a short reach through the bars.
+        Transform bench = BuildWorkbench(parent, palette, new Vector3(2.4f, 0f, 4.1f));
+        bench.rotation = Quaternion.Euler(0f, 90f, 0f);
+        BuildJailKey(parent, palette, bench.TransformPoint(new Vector3(-0.5f, 1.02f, 0.05f)));
         BuildCloset(parent, palette);
+        BuildPaintBucket(parent, palette, new Vector3(-3.4f, 0f, 0.4f));
         BuildBed(parent, palette, new Vector3(4.15f, 0f, -0.85f));
         BuildShelf(parent, palette, new Vector3(5.15f, 0f, -2.4f));
-        BuildCrateStack(parent, palette, "CratesWest", new Vector3(-3.7f, 0f, 2.4f));
-        BuildCrateStack(parent, palette, "CratesEast", new Vector3(3.6f, 0f, 2.1f));
+        MakeAxeBreakable(BuildCrateStack(parent, palette, "CratesWest", new Vector3(-3.7f, 0f, 2.4f)));
+        MakeAxeBreakable(BuildCrateStack(parent, palette, "CratesEast", new Vector3(3.6f, 0f, 2.1f)));
 
         // Water heater in the west corner, clear of the stair opening.
         Transform heater = new GameObject("WaterHeater").transform;
         heater.SetParent(parent, false);
         heater.position = new Vector3(-4.7f, 0f, -2.15f);
-        Cylinder(heater, "Tank", new Vector3(0f, 0.7f, 0f), new Vector3(0.7f, 0.7f, 0.7f), palette.metal);
+        GameObject tank = Cylinder(heater, "Tank", new Vector3(0f, 0.7f, 0f), new Vector3(0.7f, 0.7f, 0.7f), palette.metal);
+        SetInteractable(tank, "Heater", "The tank is cold. It hasn't been lit in a long time.");
         Cylinder(heater, "Vent", new Vector3(0f, 1.55f, 0f), new Vector3(0.12f, 0.2f, 0.12f), palette.rust);
     }
 
@@ -170,7 +179,8 @@ public static class BasementSceneBuilder
         root.SetParent(parent, false);
         root.position = origin;
 
-        Box(root, "Body", new Vector3(0f, 0.7f, 0f), new Vector3(1.15f, 1.4f, 0.85f), palette.rust);
+        GameObject furnaceBody = Box(root, "Body", new Vector3(0f, 0.7f, 0f), new Vector3(1.15f, 1.4f, 0.85f), palette.rust);
+        SetInteractable(furnaceBody, "Furnace", "Ow, it's hot. What do I expect will happen?");
         Box(root, "Door", new Vector3(0.58f, 0.55f, 0f), new Vector3(0.06f, 0.7f, 0.5f), palette.metal);
         Box(root, "Mouth", new Vector3(0.62f, 0.48f, 0f), new Vector3(0.04f, 0.28f, 0.22f), palette.ember, false);
         Cylinder(root, "Flue", new Vector3(-0.15f, 1.7f, -0.05f), new Vector3(0.18f, 0.45f, 0.18f), palette.metal);
@@ -178,7 +188,7 @@ public static class BasementSceneBuilder
         Cylinder(root, "CeilingDuct", new Vector3(-0.15f, 3.05f, -0.05f), new Vector3(0.14f, 0.95f, 0.14f), palette.metal);
     }
 
-    static void BuildWorkbench(Transform parent, Palette palette, Vector3 origin)
+    static Transform BuildWorkbench(Transform parent, Palette palette, Vector3 origin)
     {
         Transform root = new GameObject("Workbench").transform;
         root.SetParent(parent, false);
@@ -198,6 +208,7 @@ public static class BasementSceneBuilder
         Box(root, "WrenchShaft", new Vector3(0.28f, 1.01f, -0.08f), new Vector3(0.34f, 0.03f, 0.06f), palette.metal, false);
         Box(root, "WrenchJawA", new Vector3(0.46f, 1.02f, -0.02f), new Vector3(0.08f, 0.04f, 0.04f), palette.metal, false);
         Box(root, "WrenchJawB", new Vector3(0.46f, 1.02f, -0.14f), new Vector3(0.08f, 0.04f, 0.04f), palette.metal, false);
+        return root;
     }
 
     static void BuildCloset(Transform parent, Palette palette)
@@ -236,9 +247,11 @@ public static class BasementSceneBuilder
 
         Transform axe = new GameObject("Axe").transform;
         axe.SetParent(root, false);
-        axe.localPosition = new Vector3(0f, 0.9f, 0.02f);
-        Cylinder(axe, "Handle", new Vector3(0f, 0f, 0f), new Vector3(0.05f, 0.22f, 0.05f), palette.wood, Quaternion.Euler(0f, 0f, 20f), false);
-        Box(axe, "Head", new Vector3(0.1f, 0.16f, 0f), new Vector3(0.22f, 0.1f, 0.06f), palette.metal, false);
+        axe.localPosition = new Vector3(0f, 0.85f, 0.02f);
+        axe.localRotation = Quaternion.Euler(0f, 0f, 18f);
+        Cylinder(axe, "Handle", new Vector3(0f, -0.05f, 0f), new Vector3(0.045f, 0.28f, 0.045f), palette.wood, Quaternion.identity, false);
+        Box(axe, "Head", new Vector3(0f, 0.22f, 0f), new Vector3(0.2f, 0.08f, 0.055f), palette.metal, false);
+        Box(axe, "Blade", new Vector3(0.12f, 0.22f, 0f), new Vector3(0.07f, 0.14f, 0.02f), palette.metal, false);
         BoxCollider axeCollider = axe.gameObject.AddComponent<BoxCollider>();
         axeCollider.center = new Vector3(0.04f, 0.08f, 0f);
         axeCollider.size = new Vector3(0.34f, 0.5f, 0.14f);
@@ -256,6 +269,10 @@ public static class BasementSceneBuilder
         Box(root, "Mattress", new Vector3(0f, 0.46f, 0.02f), new Vector3(1.05f, 0.22f, 1.9f), palette.fabric);
         Box(root, "Pillow", new Vector3(0f, 0.62f, 0.78f), new Vector3(0.55f, 0.12f, 0.32f), palette.fabric);
         Box(root, "Headboard", new Vector3(0f, 0.7f, 1.0f), new Vector3(1.15f, 0.7f, 0.08f), palette.wood);
+        SetInteractable(root.gameObject, "Bed", "The mattress smells like dust and old rain.");
+        BoxCollider bedCollider = root.gameObject.AddComponent<BoxCollider>();
+        bedCollider.center = new Vector3(0f, 0.4f, 0f);
+        bedCollider.size = new Vector3(1.15f, 0.8f, 2.05f);
     }
 
     static void BuildShelf(Transform parent, Palette palette, Vector3 origin)
@@ -273,7 +290,7 @@ public static class BasementSceneBuilder
         Cylinder(root, "Can", new Vector3(0.22f, 0.56f, 0f), new Vector3(0.1f, 0.08f, 0.1f), palette.metal);
     }
 
-    static void BuildCrateStack(Transform parent, Palette palette, string name, Vector3 origin)
+    static GameObject BuildCrateStack(Transform parent, Palette palette, string name, Vector3 origin)
     {
         Transform root = new GameObject(name).transform;
         root.SetParent(parent, false);
@@ -281,6 +298,18 @@ public static class BasementSceneBuilder
 
         Box(root, "CrateA", new Vector3(0f, 0.28f, 0f), new Vector3(0.6f, 0.55f, 0.6f), palette.wood);
         Box(root, "CrateB", new Vector3(0.1f, 0.78f, 0.05f), new Vector3(0.45f, 0.45f, 0.45f), palette.wood);
+        return root.gameObject;
+    }
+
+    static void MakeAxeBreakable(GameObject target)
+    {
+        Damageable damageable = target.AddComponent<Damageable>();
+        SerializedObject serialized = new SerializedObject(damageable);
+        serialized.FindProperty("hitsToBreak").intValue = 2;
+        serialized.FindProperty("hitMessage").stringValue = "The crate splits.";
+        serialized.FindProperty("breakMessage").stringValue = "The crate falls to pieces.";
+        serialized.FindProperty("disableOnBreak").boolValue = true;
+        serialized.ApplyModifiedPropertiesWithoutUndo();
     }
 
     static void BuildJail(Transform parent, Palette palette)
@@ -299,6 +328,15 @@ public static class BasementSceneBuilder
         door.SetParent(parent, false);
         Blocker(door, "DoorBlocker", new Vector3(0f, y, barZ), new Vector3(doorHalf * 2f, WallHeight, 0.14f), true);
         JailDoor jailDoor = door.gameObject.AddComponent<JailDoor>();
+        // Sits on the door and slides aside with it. Disabled while shut so rays
+        // can still reach the table. Enabled once the door is open, beside the gap.
+        GameObject handle = Box(door, "DoorHandle", new Vector3(0.45f, 1.15f, barZ), new Vector3(0.16f, 0.35f, 0.18f), palette.metal);
+        Collider handleCollider = handle.GetComponent<Collider>();
+        handleCollider.enabled = false;
+        SetInteractable(handle, "Bars", "");
+        SerializedObject doorObject = new SerializedObject(jailDoor);
+        doorObject.FindProperty("handleCollider").objectReferenceValue = handleCollider;
+        doorObject.ApplyModifiedPropertiesWithoutUndo();
 
         float barHeightScale = WallHeight * 0.5f;
         for (float x = -HalfWidth + 0.35f; x <= HalfWidth - 0.3f; x += 0.34f)
@@ -322,28 +360,91 @@ public static class BasementSceneBuilder
         lockObject.FindProperty("door").objectReferenceValue = jailDoor;
         lockObject.ApplyModifiedPropertiesWithoutUndo();
         UnityEventTools.AddPersistentListener(lockRoot.GetComponent<Interactable>().OnInteract, jailLock.TryOpen);
+        SerializedObject doorLink = new SerializedObject(jailDoor);
+        doorLink.FindProperty("lockPiece").objectReferenceValue = jailLock;
+        doorLink.ApplyModifiedPropertiesWithoutUndo();
+        UnityEventTools.AddPersistentListener(handle.GetComponent<Interactable>().OnInteract, jailDoor.RequestClose);
 
-        Box(parent, "CellCot", new Vector3(-2.2f, 0.18f, 7.15f), new Vector3(0.9f, 0.28f, 1.35f), palette.wood);
+        GameObject cot = Box(parent, "CellCot", new Vector3(-2.2f, 0.18f, 7.15f), new Vector3(0.9f, 0.28f, 1.35f), palette.wood);
+        SetInteractable(cot, "Cot", "A cot. I've slept on worse. I think.");
         Box(parent, "CellMattress", new Vector3(-2.2f, 0.36f, 7.15f), new Vector3(0.8f, 0.1f, 1.15f), palette.fabric);
         Cylinder(parent, "Bucket", new Vector3(2.3f, 0.18f, 7.2f), new Vector3(0.32f, 0.16f, 0.32f), palette.metal);
 
-        BuildPryBoard(parent, palette);
         BuildSmashCrate(parent, palette);
     }
 
     static void BuildFloorboards(Transform parent, Palette palette)
     {
+        // Short planks with a seam on every side. The one that can be pried is the
+        // same size, height, and material as the rest, and it does not announce itself.
         Transform boards = new GameObject("Floorboards").transform;
         boards.SetParent(parent, false);
-        const float boardWidth = 0.24f;
-        float length = HalfDepth * 2f - 0.3f;
-        int count = Mathf.FloorToInt((HalfWidth * 2f - 0.3f) / boardWidth);
-        float startX = -count * boardWidth * 0.5f + boardWidth * 0.5f;
-        for (int i = 0; i < count; i++)
+
+        const float width = 0.26f;
+        const float length = 1.7f;
+        const float boardY = 0.016f;
+        int xCount = Mathf.Max(1, Mathf.FloorToInt((HalfWidth * 2f - 0.12f) / width));
+        int zCount = Mathf.Max(1, Mathf.FloorToInt((HalfDepth * 2f - 0.12f) / length));
+        float startX = -xCount * width * 0.5f + width * 0.5f;
+        float startZ = -zCount * length * 0.5f + length * 0.5f;
+        Vector3 size = new Vector3(width - 0.02f, 0.03f, length - 0.035f);
+        Vector3 pryTarget = new Vector3(0.45f, boardY, 6.45f);
+        GameObject pryBoard = null;
+        float best = float.MaxValue;
+
+        for (int ix = 0; ix < xCount; ix++)
         {
-            float x = startX + i * boardWidth;
-            Box(boards, "Board" + i, new Vector3(x, 0.016f, 0f), new Vector3(boardWidth - 0.025f, 0.03f, length), palette.wood, false);
+            for (int iz = 0; iz < zCount; iz++)
+            {
+                Vector3 position = new Vector3(startX + ix * width, boardY, startZ + iz * length);
+                GameObject board = Box(boards, "Board_" + ix + "_" + iz, position, size, palette.wood, false);
+                bool insideCell = position.z > 5.55f && position.z < 7.55f && Mathf.Abs(position.x) < 1.6f;
+                float distance = (position - pryTarget).sqrMagnitude;
+                if (insideCell && distance < best)
+                {
+                    best = distance;
+                    pryBoard = board;
+                }
+            }
         }
+
+        if (pryBoard != null)
+            MakePryBoard(parent, palette, pryBoard);
+    }
+
+    static void MakePryBoard(Transform keyParent, Palette palette, GameObject visual)
+    {
+        Transform root = new GameObject("LooseFloorboard").transform;
+        root.SetParent(visual.transform.parent, false);
+        root.position = visual.transform.position;
+        root.rotation = visual.transform.rotation;
+        visual.transform.SetParent(root, true);
+        visual.AddComponent<BoxCollider>();
+
+        SetInteractable(root.gameObject, "", "");
+        SerializedObject prompt = new SerializedObject(root.GetComponent<Interactable>());
+        prompt.FindProperty("showPrompt").boolValue = false;
+        prompt.ApplyModifiedPropertiesWithoutUndo();
+
+        HoldInteractable hold = root.gameObject.AddComponent<HoldInteractable>();
+        PryFloorboard pry = root.gameObject.AddComponent<PryFloorboard>();
+
+        Vector3 keyPosition = root.position;
+        keyPosition.y = 0.05f;
+        Transform hiddenKey = BuildKeyObject(keyParent, "ClosetKey", keyPosition, palette.brass);
+        BoxCollider hiddenCollider = hiddenKey.GetComponent<BoxCollider>();
+        hiddenCollider.center = new Vector3(0.04f, 0.04f, 0f);
+        hiddenCollider.size = new Vector3(0.34f, 0.14f, 0.2f);
+        hiddenKey.gameObject.SetActive(false);
+        SetInteractable(hiddenKey.gameObject, "Key", "A small key.");
+        AddItemPickup(hiddenKey.gameObject, ItemId.ClosetKey, "I already have the key.");
+
+        SerializedObject pryObject = new SerializedObject(pry);
+        pryObject.FindProperty("hold").objectReferenceValue = hold;
+        pryObject.FindProperty("boardVisual").objectReferenceValue = visual;
+        pryObject.FindProperty("hiddenKey").objectReferenceValue = hiddenKey.gameObject;
+        pryObject.FindProperty("boardCollider").objectReferenceValue = visual.GetComponent<Collider>();
+        pryObject.ApplyModifiedPropertiesWithoutUndo();
     }
 
     static void BuildJailKey(Transform parent, Palette palette, Vector3 onTable)
@@ -356,37 +457,20 @@ public static class BasementSceneBuilder
         SetInteractable(key.gameObject, "Jail key", "");
         JailKeyPuzzle puzzle = key.gameObject.AddComponent<JailKeyPuzzle>();
         SerializedObject puzzleObject = new SerializedObject(puzzle);
-        puzzleObject.FindProperty("nearBars").vector3Value = new Vector3(1.35f, 0.045f, 4.9f);
-        puzzleObject.FindProperty("pushedAway").vector3Value = new Vector3(1.85f, 0.045f, 3.55f);
+        puzzleObject.FindProperty("nearBars").vector3Value = new Vector3(2.4f, 0.045f, 5.02f);
+        puzzleObject.FindProperty("pushedAway").vector3Value = new Vector3(2.2f, 0.045f, 2.9f);
         puzzleObject.ApplyModifiedPropertiesWithoutUndo();
         UnityEventTools.AddPersistentListener(key.GetComponent<Interactable>().OnInteract, puzzle.Use);
     }
 
-    static void BuildPryBoard(Transform parent, Palette palette)
+    static void BuildPaintBucket(Transform parent, Palette palette, Vector3 origin)
     {
-        Transform board = new GameObject("LooseFloorboard").transform;
-        board.SetParent(parent, false);
-        board.position = new Vector3(0.7f, 0.045f, 6.15f);
-
-        GameObject visual = Box(board, "Board", Vector3.zero, new Vector3(0.2f, 0.05f, 1.05f), palette.wood);
-        SetInteractable(board.gameObject, "Pry the board", "");
-        HoldInteractable hold = board.gameObject.AddComponent<HoldInteractable>();
-        PryFloorboard pry = board.gameObject.AddComponent<PryFloorboard>();
-
-        Transform hiddenKey = BuildKeyObject(parent, "ClosetKey", new Vector3(0.7f, 0.06f, 6.15f), palette.brass);
-        BoxCollider hiddenCollider = hiddenKey.GetComponent<BoxCollider>();
-        hiddenCollider.center = new Vector3(0.04f, 0.05f, 0f);
-        hiddenCollider.size = new Vector3(0.36f, 0.16f, 0.22f);
-        hiddenKey.gameObject.SetActive(false);
-        SetInteractable(hiddenKey.gameObject, "Closet key", "A small key. It looks like a closet key.");
-        AddItemPickup(hiddenKey.gameObject, ItemId.ClosetKey, "I already have the closet key.");
-
-        SerializedObject pryObject = new SerializedObject(pry);
-        pryObject.FindProperty("hold").objectReferenceValue = hold;
-        pryObject.FindProperty("boardVisual").objectReferenceValue = visual;
-        pryObject.FindProperty("hiddenKey").objectReferenceValue = hiddenKey.gameObject;
-        pryObject.FindProperty("boardCollider").objectReferenceValue = visual.GetComponent<Collider>();
-        pryObject.ApplyModifiedPropertiesWithoutUndo();
+        Transform root = new GameObject("PaintBucket").transform;
+        root.SetParent(parent, false);
+        root.position = origin;
+        GameObject bucket = Cylinder(root, "Bucket", new Vector3(0f, 0.16f, 0f), new Vector3(0.34f, 0.16f, 0.34f), palette.metal);
+        Cylinder(root, "Paint", new Vector3(0f, 0.31f, 0f), new Vector3(0.28f, 0.015f, 0.28f), palette.paint, Quaternion.identity, false);
+        SetInteractable(bucket, "Bucket", "It's a bucket of paint. I think it's a muave colour.");
     }
 
     static void BuildSmashCrate(Transform parent, Palette palette)
@@ -777,6 +861,7 @@ public static class BasementSceneBuilder
             bulb = SaveEmissive(lit, "BasementBulb.mat", new Color(1f, 0.86f, 0.6f), 4f),
             ember = SaveEmissive(lit, "BasementEmber.mat", new Color(1f, 0.35f, 0.08f), 3f),
             glow = SaveEmissive(lit, "BasementFlashlightGlow.mat", new Color(1f, 0.7f, 0.32f), 0.45f),
+            paint = SaveLit(lit, "BasementPaint.mat", new Color(0.52f, 0.36f, 0.46f), 0.25f, 0f),
         };
     }
 
@@ -949,5 +1034,6 @@ public static class BasementSceneBuilder
         public Material bulb;
         public Material ember;
         public Material glow;
+        public Material paint;
     }
 }

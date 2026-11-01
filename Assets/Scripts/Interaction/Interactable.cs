@@ -19,7 +19,12 @@ public class Interactable : MonoBehaviour
     [Tooltip("Extra work to do when this is used. The message still shows either way.")]
     [SerializeField] UnityEvent onInteract;
 
+    [Tooltip("Turn off for objects that should not advertise themselves. The loose floorboard uses this.")]
+    [SerializeField] bool showPrompt = true;
+
     public string Prompt => string.IsNullOrEmpty(prompt) ? "Interact" : prompt;
+
+    public bool ShowsPrompt => showPrompt && !string.IsNullOrEmpty(prompt);
 
     public string Message => message;
 

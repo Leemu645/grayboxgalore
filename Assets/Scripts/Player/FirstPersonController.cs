@@ -78,6 +78,7 @@ public class FirstPersonController : MonoBehaviour
     float verticalVelocity;
     float yaw;
     float pitch;
+    float kickPitch;
     float jumpBuffer;
     bool inputReady;
     bool cursorLocked;
@@ -268,8 +269,20 @@ public class FirstPersonController : MonoBehaviour
         }
 
         suppressPointerLook = false;
+        kickPitch = Mathf.MoveTowards(kickPitch, 0f, 40f * Time.deltaTime);
+        float pitchLow = Mathf.Min(minPitch, maxPitch);
+        float pitchHigh = Mathf.Max(minPitch, maxPitch);
+        float shownPitch = Mathf.Clamp(pitch + kickPitch, pitchLow, pitchHigh);
         transform.rotation = Quaternion.Euler(0f, yaw, 0f);
-        viewCamera.localRotation = Quaternion.Euler(pitch, 0f, 0f);
+        viewCamera.localRotation = Quaternion.Euler(shownPitch, 0f, 0f);
+    }
+
+    /// <summary>
+    /// A short nod, used when the axe hits something. It settles back on its own.
+    /// </summary>
+    public void AddLookKick(float pitchDegrees)
+    {
+        kickPitch = Mathf.Clamp(kickPitch + pitchDegrees, -12f, 12f);
     }
 
     void Move()
