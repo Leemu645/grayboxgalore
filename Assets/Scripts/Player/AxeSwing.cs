@@ -175,9 +175,10 @@ public class AxeSwing : MonoBehaviour
         root.transform.localRotation = Quaternion.Euler(25f, -8f, 6f);
         held = root.transform;
 
+        // Blade sits on local +Z, away from the camera, so the edge leads the chop.
         CreatePiece(root.transform, "Handle", PrimitiveType.Cylinder, new Vector3(0f, -0.02f, 0f), new Vector3(0.035f, 0.16f, 0.035f), Quaternion.Euler(8f, 0f, 0f), false);
-        CreatePiece(root.transform, "Head", PrimitiveType.Cube, new Vector3(0f, 0.14f, 0.01f), new Vector3(0.16f, 0.07f, 0.05f), Quaternion.identity, true);
-        CreatePiece(root.transform, "Blade", PrimitiveType.Cube, new Vector3(0.09f, 0.14f, 0.01f), new Vector3(0.06f, 0.11f, 0.02f), Quaternion.identity, true);
+        CreatePiece(root.transform, "Head", PrimitiveType.Cube, new Vector3(0f, 0.14f, 0.02f), new Vector3(0.05f, 0.07f, 0.16f), Quaternion.identity, true);
+        CreatePiece(root.transform, "Blade", PrimitiveType.Cube, new Vector3(0f, 0.14f, 0.11f), new Vector3(0.02f, 0.11f, 0.06f), Quaternion.identity, true);
         root.SetActive(false);
     }
 

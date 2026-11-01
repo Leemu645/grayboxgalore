@@ -81,6 +81,7 @@ public static class BasementSceneBuilder
         player.AddComponent<Inventory>();
         player.AddComponent<InventoryHud>();
         player.AddComponent<HookMinigame>();
+        player.AddComponent<CarriedFire>();
         AxeSwing axe = player.AddComponent<AxeSwing>();
         SerializedObject axeObject = new SerializedObject(axe);
         axeObject.FindProperty("handleMaterial").objectReferenceValue = palette.wood;
@@ -159,8 +160,10 @@ public static class BasementSceneBuilder
         BuildJailKey(parent, palette, bench.TransformPoint(new Vector3(-0.5f, 1.02f, 0.05f)));
         BuildCloset(parent, palette);
         BuildPaintBucket(parent, palette, new Vector3(-3.4f, 0f, 0.4f));
-        BuildBed(parent, palette, new Vector3(4.15f, 0f, -0.85f));
-        BuildShelf(parent, palette, new Vector3(5.15f, 0f, -2.4f));
+        // Flush to the west wall so it can be hidden under later. The old spot sat in the open floor.
+        BuildBed(parent, palette, new Vector3(-5.42f, 0f, -4.2f));
+        Transform shelf = BuildShelf(parent, palette, new Vector3(-5.78f, 0f, 3.45f));
+        shelf.rotation = Quaternion.Euler(0f, 90f, 0f);
         MakeAxeBreakable(BuildCrateStack(parent, palette, "CratesWest", new Vector3(-3.7f, 0f, 2.4f)));
         MakeAxeBreakable(BuildCrateStack(parent, palette, "CratesEast", new Vector3(3.6f, 0f, 2.1f)));
 
@@ -180,7 +183,9 @@ public static class BasementSceneBuilder
         root.position = origin;
 
         GameObject furnaceBody = Box(root, "Body", new Vector3(0f, 0.7f, 0f), new Vector3(1.15f, 1.4f, 0.85f), palette.rust);
-        SetInteractable(furnaceBody, "Furnace", "Ow, it's hot. What do I expect will happen?");
+        SetInteractable(furnaceBody, "Furnace", "");
+        FurnaceFire furnaceFire = furnaceBody.AddComponent<FurnaceFire>();
+        UnityEventTools.AddPersistentListener(furnaceBody.GetComponent<Interactable>().OnInteract, furnaceFire.TryLight);
         Box(root, "Door", new Vector3(0.58f, 0.55f, 0f), new Vector3(0.06f, 0.7f, 0.5f), palette.metal);
         Box(root, "Mouth", new Vector3(0.62f, 0.48f, 0f), new Vector3(0.04f, 0.28f, 0.22f), palette.ember, false);
         Cylinder(root, "Flue", new Vector3(-0.15f, 1.7f, -0.05f), new Vector3(0.18f, 0.45f, 0.18f), palette.metal);
@@ -219,7 +224,12 @@ public static class BasementSceneBuilder
         root.position = new Vector3(HalfWidth - 0.3f, 0f, 1.6f);
         root.rotation = Quaternion.Euler(0f, -90f, 0f);
 
-        Box(root, "Carcass", new Vector3(0f, 1.1f, 0f), new Vector3(1.2f, 2.2f, 0.55f), palette.wood, false);
+        // Open box of panels. A solid carcass hid the axe inside the mesh even after the doors opened.
+        Box(root, "Back", new Vector3(0f, 1.1f, -0.26f), new Vector3(1.2f, 2.2f, 0.06f), palette.wood, false);
+        Box(root, "SideLeft", new Vector3(-0.57f, 1.1f, 0f), new Vector3(0.06f, 2.2f, 0.5f), palette.wood, false);
+        Box(root, "SideRight", new Vector3(0.57f, 1.1f, 0f), new Vector3(0.06f, 2.2f, 0.5f), palette.wood, false);
+        Box(root, "Top", new Vector3(0f, 2.16f, 0f), new Vector3(1.2f, 0.08f, 0.52f), palette.wood, false);
+        Box(root, "Floor", new Vector3(0f, 0.06f, 0f), new Vector3(1.12f, 0.06f, 0.5f), palette.wood, false);
 
         Transform hingeLeft = new GameObject("HingeLeft").transform;
         hingeLeft.SetParent(root, false);
@@ -245,13 +255,24 @@ public static class BasementSceneBuilder
         SetInteractable(hingeRight.Find("Door").gameObject, "Closet", "");
         UnityEventTools.AddPersistentListener(hingeRight.Find("Door").GetComponent<Interactable>().OnInteract, closet.TryOpen);
 
+        // Upright in the open front of the closet, blade toward the room (+Z). A small light so it reads in the dark.
         Transform axe = new GameObject("Axe").transform;
         axe.SetParent(root, false);
-        axe.localPosition = new Vector3(0f, 0.85f, 0.02f);
-        axe.localRotation = Quaternion.Euler(0f, 0f, 18f);
-        Cylinder(axe, "Handle", new Vector3(0f, -0.05f, 0f), new Vector3(0.045f, 0.28f, 0.045f), palette.wood, Quaternion.identity, false);
-        Box(axe, "Head", new Vector3(0f, 0.22f, 0f), new Vector3(0.2f, 0.08f, 0.055f), palette.metal, false);
-        Box(axe, "Blade", new Vector3(0.12f, 0.22f, 0f), new Vector3(0.07f, 0.14f, 0.02f), palette.metal, false);
+        axe.localPosition = new Vector3(0.05f, 0.72f, 0.16f);
+        axe.localRotation = Quaternion.Euler(8f, 0f, 12f);
+        Cylinder(axe, "Handle", new Vector3(0f, 0f, 0f), new Vector3(0.05f, 0.32f, 0.05f), palette.wood, Quaternion.identity, false);
+        Box(axe, "Head", new Vector3(0f, 0.28f, 0.02f), new Vector3(0.06f, 0.08f, 0.2f), palette.metal, false);
+        Box(axe, "Blade", new Vector3(0f, 0.28f, 0.13f), new Vector3(0.02f, 0.14f, 0.08f), palette.metal, false);
+        GameObject axeLightObject = new GameObject("AxeLight");
+        axeLightObject.transform.SetParent(root, false);
+        axeLightObject.transform.localPosition = new Vector3(0f, 1.35f, 0.2f);
+        Light axeLight = axeLightObject.AddComponent<Light>();
+        axeLight.type = LightType.Point;
+        axeLight.color = new Color(1f, 0.82f, 0.55f);
+        axeLight.useColorTemperature = false;
+        axeLight.intensity = 0.7f;
+        axeLight.range = 2.2f;
+        axeLight.shadows = LightShadows.None;
         BoxCollider axeCollider = axe.gameObject.AddComponent<BoxCollider>();
         axeCollider.center = new Vector3(0.04f, 0.08f, 0f);
         axeCollider.size = new Vector3(0.34f, 0.5f, 0.14f);
@@ -275,7 +296,7 @@ public static class BasementSceneBuilder
         bedCollider.size = new Vector3(1.15f, 0.8f, 2.05f);
     }
 
-    static void BuildShelf(Transform parent, Palette palette, Vector3 origin)
+    static Transform BuildShelf(Transform parent, Palette palette, Vector3 origin)
     {
         Transform root = new GameObject("Shelf").transform;
         root.SetParent(parent, false);
@@ -288,6 +309,7 @@ public static class BasementSceneBuilder
         Box(root, "Board3", new Vector3(0f, 1.55f, 0f), new Vector3(1.1f, 0.05f, 0.38f), palette.wood);
         Box(root, "Box", new Vector3(-0.2f, 1.14f, 0f), new Vector3(0.22f, 0.18f, 0.22f), palette.wall);
         Cylinder(root, "Can", new Vector3(0.22f, 0.56f, 0f), new Vector3(0.1f, 0.08f, 0.1f), palette.metal);
+        return root;
     }
 
     static GameObject BuildCrateStack(Transform parent, Palette palette, string name, Vector3 origin)
@@ -365,9 +387,6 @@ public static class BasementSceneBuilder
         doorLink.ApplyModifiedPropertiesWithoutUndo();
         UnityEventTools.AddPersistentListener(handle.GetComponent<Interactable>().OnInteract, jailDoor.RequestClose);
 
-        GameObject cot = Box(parent, "CellCot", new Vector3(-2.2f, 0.18f, 7.15f), new Vector3(0.9f, 0.28f, 1.35f), palette.wood);
-        SetInteractable(cot, "Cot", "A cot. I've slept on worse. I think.");
-        Box(parent, "CellMattress", new Vector3(-2.2f, 0.36f, 7.15f), new Vector3(0.8f, 0.1f, 1.15f), palette.fabric);
         Cylinder(parent, "Bucket", new Vector3(2.3f, 0.18f, 7.2f), new Vector3(0.32f, 0.16f, 0.32f), palette.metal);
 
         BuildSmashCrate(parent, palette);
@@ -419,7 +438,11 @@ public static class BasementSceneBuilder
         root.position = visual.transform.position;
         root.rotation = visual.transform.rotation;
         visual.transform.SetParent(root, true);
+        // One end sits a few centimetres proud of the other boards. Same mesh, just disturbed.
+        root.position += new Vector3(0.02f, 0.02f, 0f);
+        root.rotation = Quaternion.Euler(4f, 7f, 1.5f);
         visual.AddComponent<BoxCollider>();
+        root.gameObject.AddComponent<LookHighlight>();
 
         SetInteractable(root.gameObject, "", "");
         SerializedObject prompt = new SerializedObject(root.GetComponent<Interactable>());

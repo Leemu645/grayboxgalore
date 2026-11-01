@@ -56,6 +56,7 @@ public class PlayerInteractor : MonoBehaviour
     Image holdFill;
     float holdTime;
     bool holdBarReady;
+    LookHighlight highlighted;
 
     void Awake()
     {
@@ -124,6 +125,7 @@ public class PlayerInteractor : MonoBehaviour
         if (PlayerControl.Suspended)
         {
             ShowPrompt(null);
+            UpdateHighlight(null);
             SetHoldVisible(false);
             holdTime = 0f;
             return;
@@ -135,6 +137,7 @@ public class PlayerInteractor : MonoBehaviour
 
         Interactable lookedAt = cursorLocked ? FindLookTarget() : null;
         ShowPrompt(lookedAt);
+        UpdateHighlight(lookedAt);
 
         HoldInteractable hold = lookedAt != null ? lookedAt.GetComponent<HoldInteractable>() : null;
         if (hold != null && hold.AcceptingHolds && hold.isActiveAndEnabled)
@@ -237,6 +240,22 @@ public class PlayerInteractor : MonoBehaviour
 
         if (show)
             promptLabel.text = "E: " + target.Prompt;
+    }
+
+    void UpdateHighlight(Interactable target)
+    {
+        LookHighlight next = null;
+        if (target != null && target.isActiveAndEnabled)
+            next = target.GetComponent<LookHighlight>();
+
+        if (next == highlighted)
+            return;
+
+        if (highlighted != null)
+            highlighted.SetHighlighted(false);
+        highlighted = next;
+        if (highlighted != null)
+            highlighted.SetHighlighted(true);
     }
 
     public void ShowMessage(string message)
