@@ -59,6 +59,10 @@ public class JailKeyPuzzle : MonoBehaviour
                 stage = Stage.OutOfReach;
                 StartCoroutine(SlideTo(pushedAway, "FUCK! I was so close, what the fuck do I do now?"));
             }
+            else if (held == ItemId.Splinter)
+            {
+                BeginHook();
+            }
             else
             {
                 PlayerInteractor.Instance.ShowMessage("I can't reach it.");
@@ -69,10 +73,7 @@ public class JailKeyPuzzle : MonoBehaviour
 
         if (held == ItemId.Splinter)
         {
-            if (minigame == null)
-                minigame = FindAnyObjectByType<HookMinigame>();
-            if (minigame != null)
-                minigame.Begin(this);
+            BeginHook();
         }
         else if (held == ItemId.FloorboardPlank)
         {
@@ -159,6 +160,14 @@ public class JailKeyPuzzle : MonoBehaviour
         material.color = color;
         material.SetColor("_BaseColor", color);
         return material;
+    }
+
+    void BeginHook()
+    {
+        if (minigame == null)
+            minigame = FindAnyObjectByType<HookMinigame>();
+        if (minigame != null)
+            minigame.Begin(this);
     }
 
     public void TakeFromMinigame()
