@@ -37,18 +37,18 @@ You start **inside the jail**, looking at the bars. The room beyond is dark: a b
 
 ### Solution, in order
 
-1. Look down at the loose floorboard in the cell. The prompt says **Hold: Pry the board**. Hold **E** until the bar under the crosshair fills. Let go and do it again. You need **five** full holds.
+1. The floor is covered in matching boards. One board inside the cell, a little left of center as you face the bars, can be pried. It looks like the others and does not label itself. Hold **E** on it until a bar appears and fills. Let go and do it again, five full holds.
    - After the first: "It looks like you can pull it out, but you're not sure."
    - After the third: "Is this hopeless? I'm never getting out of here."
-   - After the fifth the board comes off, a **Plank** is in your inventory, and the line is "I can't believe that worked. But why would there be a key here?" A closet key is lying in the gap.
-2. Press **E** on that key. **Closet Key** is added and selected.
-3. The wooden box is in the cell, against the bars. With **Plank** selected (press the number on its slot), look at the box and press **E**. It breaks into splinters.
+   - After the fifth the board comes off, a **Plank** is in your inventory, and the line is "I can't believe that worked. But why would there be a key here?" A key is lying in the gap. The hotbar calls it **Key**.
+2. Press **E** on that key.
+3. The wooden box is in the cell, against the bars. With **Plank** selected, look at the box and press **E**. It breaks into splinters.
 4. Press **E** on a splinter. **Splinter** is added.
-5. Through the bars, a long table sits against the jail with a brass key on it. Select the **Plank** and press **E** while looking at that key. It falls onto the floor just outside the bars. Press **E** on it again with the plank still selected. It is knocked farther into the room and the screen says: "FUCK! I was so close, what the fuck do I do now?"
-6. Select the **Splinter** and press **E** on that far key. A hook game opens and the mouse is free. Move slowly. The splinter tip wobbles. Put the tip in the dark hole of the ring, then drag the hooked key to the strip on the right. A hard jerk drops it and you hook it again. **Escape** cancels and leaves the key on the floor so you can retry. Success puts **Jail Key** in the inventory.
-7. Select **Jail Key**, look at the lock on the bars, and press **E**. The barred door slides open. You can walk out. Without the jail key the lock still says "You need a key".
-8. The closet is against the east wall, doors facing the room. Select **Closet Key**, look at a closet door, and press **E**. The doors swing open. Look at the axe inside and press **E**.
-9. A flashlight is on the floor outside the cell, to the left of the table as you leave. Press **E** to pick it up, then **F** to toggle the beam. The stair door at the top of the stairs still says "It's sealed shut".
+5. The workbench stands just outside the bars, turned so its long side runs away from the jail and the doorway stays open. A brass jail key sits on the near end. Select the **Plank** and press **E** on that key. A plank pokes out and the key slides onto the floor by the bars. Press **E** on it again. It skids farther into the room and the screen says: "FUCK! I was so close, what the fuck do I do now?"
+6. Select the **Splinter** and press **E** on that far key. A hook game opens and the mouse is free. Move slowly. Put the tip in the dark hole of the ring, then drag it to the strip on the right. A hard jerk drops it. **Escape** cancels so you can retry. Success puts **Jail Key** in the inventory.
+7. Select **Jail Key** and press **E** on the lock. The lock vanishes and the bars slide aside so you can walk out. Look at the bars where they stopped and press **E** to shut them again. The lock comes back only after they finish closing. The other key, used on that lock, says: "It's no use, it doesn't fit."
+8. The closet is against the east wall. Select **Key**, look at a closet door, and press **E**. The doors swing open. Look at the axe and press **E**. Select **Axe** in the hotbar and it appears in your hand. Left click swings it. The crate stacks in the room break after a couple of hits. Walls and the furnace just thunk.
+9. The flashlight is on the floor outside the cell. Press **E** to pick it up. It only shows, and **F** only toggles it, while **Flashlight** is the selected hotbar slot. The stair door still says "It's sealed shut". The paint bucket says "It's a bucket of paint. I think it's a muave colour." The furnace says "Ow, it's hot. What do I expect will happen?"
 
 If you use the wrong item, the line is a hint such as "I can't reach it." or "It's locked." The plank is not used up, so you can hit the box and the table key with the same plank.
 
