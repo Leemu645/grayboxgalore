@@ -21,6 +21,8 @@ public class FlashlightPickup : MonoBehaviour
         }
 
         flashlight.Give();
+        if (Inventory.Instance != null)
+            Inventory.Instance.Add(ItemId.Flashlight);
         gameObject.SetActive(false);
     }
 }
