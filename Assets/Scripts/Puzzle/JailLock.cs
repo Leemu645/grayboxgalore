@@ -9,6 +9,12 @@ public class JailLock : MonoBehaviour
 {
     [SerializeField] JailDoor door;
 
+    /// <summary>
+    /// The bars are fully shut and this lock is back on them.
+    /// While the door is sliding, this is false.
+    /// </summary>
+    public bool IsSecured => isActiveAndEnabled && door != null && !door.IsOpen;
+
     public void TryOpen()
     {
         if (PlayerInteractor.Instance == null)

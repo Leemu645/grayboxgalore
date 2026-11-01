@@ -41,7 +41,7 @@ public class InventoryHud : MonoBehaviour
 
     void Update()
     {
-        if (PlayerControl.Suspended || inventory == null || inventory.Items.Count == 0)
+        if (PlayerControl.Suspended || HidingBlocks() || inventory == null || inventory.Items.Count == 0)
             return;
 
         Keyboard keyboard = Keyboard.current;
@@ -63,6 +63,11 @@ public class InventoryHud : MonoBehaviour
             inventory.Cycle(-1);
         else if (scroll < -0.1f)
             inventory.Cycle(1);
+    }
+
+    static bool HidingBlocks()
+    {
+        return PlayerHiding.Instance != null && PlayerHiding.Instance.BlocksWorldUse;
     }
 
     void BuildCanvas()

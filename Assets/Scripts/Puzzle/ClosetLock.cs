@@ -12,27 +12,48 @@ public class ClosetLock : MonoBehaviour
     [SerializeField] float openAngle = 110f;
     [SerializeField] float swingSpeed = 140f;
 
-    bool open;
+    bool unlocked;
     float angle;
+    float targetAngle;
 
-    public bool IsOpen => open;
+    public bool IsOpen => unlocked;
+
+    public float OpenAngle => openAngle;
 
     void Update()
     {
-        if (!open)
+        if (!unlocked)
             return;
 
-        angle = Mathf.MoveTowards(angle, openAngle, swingSpeed * Time.deltaTime);
+        angle = Mathf.MoveTowards(angle, targetAngle, swingSpeed * Time.deltaTime);
         if (hingeLeft != null)
             hingeLeft.localRotation = Quaternion.Euler(0f, -angle, 0f);
         if (hingeRight != null)
             hingeRight.localRotation = Quaternion.Euler(0f, angle, 0f);
     }
 
+    /// <summary>
+    /// How far the doors sit open. Hiding pulls them almost shut, leaving a crack.
+    /// </summary>
+    public void SetDoorAngle(float degrees)
+    {
+        if (!unlocked)
+            return;
+
+        targetAngle = Mathf.Clamp(degrees, 0f, openAngle);
+    }
+
     public void TryOpen()
     {
-        if (open || PlayerInteractor.Instance == null)
+        if (PlayerInteractor.Instance == null)
             return;
+
+        if (unlocked)
+        {
+            if (PlayerHiding.Instance != null)
+                PlayerHiding.Instance.RequestCloset();
+            return;
+        }
 
         if (Inventory.Instance == null || Inventory.Instance.Selected != ItemId.ClosetKey)
         {
@@ -42,7 +63,8 @@ public class ClosetLock : MonoBehaviour
             return;
         }
 
-        open = true;
+        unlocked = true;
+        targetAngle = openAngle;
         if (closedBlocker != null)
             closedBlocker.enabled = false;
 

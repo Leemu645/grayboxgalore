@@ -18,6 +18,7 @@ This project uses the **Input System** package only (Project Settings → Player
 | Pry a loose board | Hold E until the bar fills. Do this 5 times | Hold the north button |
 | Release the cursor | Escape | Start |
 | Lock the cursor again | Click in the Game view | |
+| Summon the visitor (editor only) | F9, while they are not already down here | |
 
 The cursor locks and hides when you press Play. Press Escape if you need the mouse back for the editor. During the key-hook game the mouse is free on purpose. Escape closes that game and locks the cursor again.
 
@@ -47,8 +48,8 @@ You start **inside the jail**, looking at the bars. The room beyond is dark: a b
 5. The workbench stands just outside the bars, turned so its long side runs away from the jail and the doorway stays open. A brass jail key sits on the near end. Select the **Plank** and press **E** on that key. A plank pokes out and the key slides onto the floor by the bars. You can hook it with the **Splinter** right there. Press **E** on it again with the plank if you want: it skids farther into the room and the screen says: "FUCK! I was so close, what the fuck do I do now?" The splinter still works on it after that.
 6. Select the **Splinter** and press **E** on the fallen key. A hook game opens and the mouse is free. Move slowly. Put the tip in the dark hole of the ring, then drag it to the strip on the right. A hard jerk drops it. **Escape** cancels so you can retry. Success puts **Jail Key** in the inventory.
 7. Select **Jail Key** and press **E** on the lock. The lock vanishes and the bars slide aside so you can walk out. Look at the bars where they stopped and press **E** to shut them again. The lock comes back only after they finish closing. The other key, used on that lock, says: "It's no use, it doesn't fit."
-8. The closet is against the east wall and is an open cabinet, not a solid block. Select **Key**, look at a closet door, and press **E**. The doors swing open. The axe is standing inside, blade toward you, with a small light on it. Press **E** on the axe. Select **Axe** and the blade points forward. Left click swings it. The crate stacks in the room break after a couple of hits. Walls just thunk.
-9. The flashlight is on the floor outside the cell. Press **E** to pick it up, select it, and press **F**. The model hides if you select something else, but the beam stays on until you press **F** again. The bed is against the west wall. The shelf on that wall faces the middle of the room. The stair door still says "It's sealed shut". The paint bucket says "It's a bucket of paint. I think it's a muave colour." With the **Plank** or **Splinter** selected, the furnace sets that item alight for 10 seconds ("It catches fire." then "The flame dies out."). Any other item still gets "Ow, it's hot. What do I expect will happen?" The burning item is not used up.
+8. The closet is against the east wall and is an open cabinet, not a solid block. Select **Key**, look at a closet door, and press **E**. The doors swing open. The axe is standing inside, blade toward you, with a small light on it. Press **E** on the axe. Select **Axe** and the blade points forward. Left click swings it. The crate stacks in the room break after a couple of hits. Walls just thunk. After the closet is unlocked, press **E** on an open door to step inside. The doors pull almost shut, the view narrows, and a faint **Hidden** label appears. **E** steps back out. You can do this any time after the closet is unlocked, not only while the visitor is downstairs.
+9. The flashlight is on the floor outside the cell. Press **E** to pick it up, select it, and press **F**. The model hides if you select something else, but the beam stays on until you press **F** again. The bed is against the west wall. Press **E** on it to crawl under (the mattress line still shows). The camera drops and you can peek out. **E** crawls back out. The shelf on that wall faces the middle of the room. The stair door still says "It's sealed shut" even when the visitor uses it. The paint bucket says "It's a bucket of paint. I think it's a muave colour." With the **Plank** or **Splinter** selected, the furnace sets that item alight for 10 seconds ("It catches fire." then "The flame dies out."). Any other item still gets "Ow, it's hot. What do I expect will happen?" The burning item is not used up.
 
 If you use the wrong item, the line is a hint such as "I can't reach it." or "It's locked." The plank is not used up, so you can hit the box and the table key with the same plank.
 
@@ -79,10 +80,29 @@ What you should hear:
 | Closet key on the closet | A door creak. Any other item rattles. |
 | Plank or splinter in the furnace | A catch, then crackle for the ten seconds it burns. |
 | Hook game | Ticks while you chase the ring, a scratch once it is hooked, a clink when it reaches the edge. |
+| Visitor | Heavy slow steps, then faster ones if it runs. A sting when it spots you. A yell if it catches you. The upstairs handle rattles before the door opens. |
 
 Where the files came from, and which ones are synthesized placeholders, is in `Assets/Audio/CREDITS.md`. Unity creates the `.meta` files for those clips on import. You do not need to author them.
 
-`GameAudio` is the shared helper: `PlayAt` for a 3D one-shot, `Play2D` for a flat one, and `BeginLoop` / `EndLoop` for a loop stuck to an object. `PlayFootstep` and `PlayStinger` are there for a later enemy. Stingers are an empty list until that enemy has clips.
+`GameAudio` is the shared helper: `PlayAt` for a 3D one-shot, `Play2D` for a flat one, and `BeginLoop` / `EndLoop` for a loop stuck to an object. The visitor uses `PlayFootstep` (slower and pitched down while walking, faster while sprinting), `PlayStinger` when it spots you, and `PlayScream` for the jumpscare.
+
+## The visitor
+
+Rebuild the basement after pulling this change. An older scene has no `Visitor`, no cell volume, and no hide points.
+
+You start safe: you are inside the cell, the bars are shut, and the lock is on. That is one of three safe places.
+
+1. **Locked cell.** Feet inside the north strip, bars fully shut, lock visible again. Opening the bars, or standing in the doorway while they slide, is not safe. Closing them counts only once the lock is back.
+2. **Inside the closet.** Only after you have unlocked it. Press **E** on an open door. The doors close to a crack, movement stops, look is limited, and **Hidden** appears. **E** leaves. Standing in the open closet without stepping in does not count.
+3. **Under the bed.** Press **E** on the bed. The camera ducks down so you can peek out. **E** crawls out. Leaving either hiding spot makes you unsafe immediately, including while you are still climbing out.
+
+The first visit is a random **40–70 seconds** after you press Play. You hear heavy footsteps and the upstairs handle rattle for about two or three seconds. The sealed door then swings open (you still cannot walk through it) and a tall figure walks down the ramp. It browses the floor for a random **8–12 seconds**. If you stay safe the whole time, it walks back up, the door shuts, and another visit is scheduled 40–70 seconds later. There is no win state yet, so this repeats.
+
+If you are unsafe anywhere it can walk to, including the cell with the bars open, it plays a sting and sprints. It does not pass through the closed bars; it uses the open doorway. When it reaches you the camera snaps to its face, the screen shakes, and it screams. About a second later the screen fades to **GAME OVER**. **Try Again**, **R**, or **E** reloads the basement. The cursor, the pause flag, and the listener volume are reset by that reload.
+
+On the `Visitor` object, **Min Arrival Seconds**, **Max Arrival Seconds**, **Min Search Seconds**, and **Max Search Seconds** are the timers. Tick **Summon Now** during Play, or press **F9** in the editor, to skip the wait. F9 does nothing if a visit is already in progress. F9 is not in a player build.
+
+To test without waiting: press Play, walk out of the cell (or open the bars), press F9, and do not hide. To test a spared visit, stay in the locked cell, press F9, and wait for the door upstairs. Then try the closet and the bed the same way after you can reach them.
 
 ## Optional: a simpler test room
 

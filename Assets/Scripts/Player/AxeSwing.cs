@@ -54,7 +54,7 @@ public class AxeSwing : MonoBehaviour
 
     void Update()
     {
-        if (PlayerControl.Suspended)
+        if (PlayerControl.Suspended || HidingBlocks())
         {
             RefreshHeld();
             return;
@@ -107,7 +107,7 @@ public class AxeSwing : MonoBehaviour
     /// </summary>
     public bool TryConsumeAttack()
     {
-        if (!IsSelected() || PlayerControl.Suspended)
+        if (!IsSelected() || PlayerControl.Suspended || HidingBlocks())
             return false;
         if (Cursor.lockState != CursorLockMode.Locked)
             return false;
@@ -169,6 +169,11 @@ public class AxeSwing : MonoBehaviour
         return material != null && material.name.IndexOf("Wood", System.StringComparison.OrdinalIgnoreCase) >= 0;
     }
 
+    static bool HidingBlocks()
+    {
+        return PlayerHiding.Instance != null && PlayerHiding.Instance.BlocksWorldUse;
+    }
+
     void Kick(float pitch)
     {
         FirstPersonController body = GetComponent<FirstPersonController>();
@@ -179,7 +184,7 @@ public class AxeSwing : MonoBehaviour
     void RefreshHeld()
     {
         if (held != null)
-            held.gameObject.SetActive(IsSelected() && !PlayerControl.Suspended);
+            held.gameObject.SetActive(IsSelected() && !PlayerControl.Suspended && !HidingBlocks());
     }
 
     void BuildHeldModel()
