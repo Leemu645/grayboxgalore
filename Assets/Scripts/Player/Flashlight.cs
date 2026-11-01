@@ -103,6 +103,8 @@ public class Flashlight : MonoBehaviour
         {
             turnedOn = !turnedOn;
             onToggle?.Invoke();
+            if (GameAudio.Instance != null)
+                GameAudio.Instance.PlayFlashlight(turnedOn);
         }
 
         RefreshVisuals();

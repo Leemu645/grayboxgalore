@@ -42,7 +42,7 @@ public class JailKeyPuzzle : MonoBehaviour
             if (held == ItemId.FloorboardPlank)
             {
                 stage = Stage.NearBars;
-                StartCoroutine(SlideTo(nearBars, "The key clatters off the table, just outside the bars."));
+                StartCoroutine(SlideTo(nearBars, "The key clatters off the table, just outside the bars.", true));
             }
             else
             {
@@ -57,7 +57,7 @@ public class JailKeyPuzzle : MonoBehaviour
             if (held == ItemId.FloorboardPlank)
             {
                 stage = Stage.OutOfReach;
-                StartCoroutine(SlideTo(pushedAway, "FUCK! I was so close, what the fuck do I do now?"));
+                StartCoroutine(SlideTo(pushedAway, "FUCK! I was so close, what the fuck do I do now?", false));
             }
             else if (held == ItemId.Splinter)
             {
@@ -85,13 +85,20 @@ public class JailKeyPuzzle : MonoBehaviour
         }
     }
 
-    IEnumerator SlideTo(Vector3 destination, string message)
+    IEnumerator SlideTo(Vector3 destination, string message, bool offTheTable)
     {
         busy = true;
         if (PlayerInteractor.Instance != null)
             PlayerInteractor.Instance.ShowMessage(message);
 
         Vector3 from = transform.position;
+        if (GameAudio.Instance != null)
+        {
+            if (offTheTable)
+                GameAudio.Instance.PlayKeyJingle(from);
+            else
+                GameAudio.Instance.PlayKeySkid(from);
+        }
         Quaternion fromRotation = transform.rotation;
         GameObject plank = CreatePokePlank();
         Vector3 pokeStart = new Vector3(from.x, 1.05f, 5.32f);

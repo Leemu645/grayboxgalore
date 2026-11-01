@@ -4,7 +4,8 @@ using UnityEngine.Events;
 /// <summary>
 /// Something an axe swing can strike. Hits count down to a break.
 /// Put this on the object, or on a parent of the collider that gets hit.
-/// An enemy can use the same component later.
+/// The swing plays the hit sound. An enemy can use this component later and
+/// call GameAudio.PlayAxeHit or PlayStinger itself.
 /// </summary>
 public class Damageable : MonoBehaviour
 {

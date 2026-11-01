@@ -119,6 +119,8 @@ public class AxeSwing : MonoBehaviour
         swinging = true;
         swingTime = 0f;
         didHit = false;
+        if (GameAudio.Instance != null)
+            GameAudio.Instance.PlayAxeWhoosh();
         return true;
     }
 
@@ -140,15 +142,31 @@ public class AxeSwing : MonoBehaviour
             if (damageable != null && !damageable.IsBroken)
             {
                 damageable.Hit();
+                if (GameAudio.Instance != null)
+                    GameAudio.Instance.PlayAxeHit(hit.point, true);
                 Kick(-3.5f);
                 return;
             }
 
+            if (GameAudio.Instance != null)
+                GameAudio.Instance.PlayAxeHit(hit.point, IsWood(hit.collider));
             Kick(-2f);
             if (PlayerInteractor.Instance != null)
                 PlayerInteractor.Instance.ShowMessage("The axe thunks against it.");
             return;
         }
+    }
+
+    static bool IsWood(Collider collider)
+    {
+        if (collider == null)
+            return false;
+
+        Renderer renderer = collider.GetComponent<Renderer>();
+        if (renderer == null)
+            renderer = collider.GetComponentInParent<Renderer>();
+        Material material = renderer != null ? renderer.sharedMaterial : null;
+        return material != null && material.name.IndexOf("Wood", System.StringComparison.OrdinalIgnoreCase) >= 0;
     }
 
     void Kick(float pitch)

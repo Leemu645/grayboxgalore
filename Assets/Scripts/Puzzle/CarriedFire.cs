@@ -18,6 +18,7 @@ public class CarriedFire : MonoBehaviour
     GameObject flameRoot;
     Light flameLight;
     Material flameMaterial;
+    AudioSource crackle;
 
     void Awake()
     {
@@ -47,6 +48,13 @@ public class CarriedFire : MonoBehaviour
         announcedOut = false;
         if (PlayerInteractor.Instance != null)
             PlayerInteractor.Instance.ShowMessage(ItemNames.Label(item) + " catches fire.");
+
+        if (GameAudio.Instance != null)
+        {
+            GameAudio.Instance.PlayCatchFire();
+            if (crackle == null)
+                crackle = GameAudio.Instance.BeginFireCrackle(transform);
+        }
     }
 
     void Update()
@@ -61,6 +69,9 @@ public class CarriedFire : MonoBehaviour
         {
             burning = ItemId.None;
             SetFlame(false);
+            if (GameAudio.Instance != null)
+                GameAudio.Instance.EndLoop(crackle);
+            crackle = null;
             if (!announcedOut && PlayerInteractor.Instance != null)
             {
                 announcedOut = true;

@@ -37,6 +37,8 @@ public class ClosetLock : MonoBehaviour
         if (Inventory.Instance == null || Inventory.Instance.Selected != ItemId.ClosetKey)
         {
             PlayerInteractor.Instance.ShowMessage("It's locked.");
+            if (GameAudio.Instance != null)
+                GameAudio.Instance.PlayLockRattle(transform.position);
             return;
         }
 
@@ -44,6 +46,8 @@ public class ClosetLock : MonoBehaviour
         if (closedBlocker != null)
             closedBlocker.enabled = false;
 
+        if (GameAudio.Instance != null)
+            GameAudio.Instance.PlayClosetCreak(transform.position);
         PlayerInteractor.Instance.ShowMessage("The closet opens.");
     }
 }

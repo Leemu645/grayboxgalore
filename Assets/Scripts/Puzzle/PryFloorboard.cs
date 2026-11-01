@@ -35,6 +35,17 @@ public class PryFloorboard : MonoBehaviour
 
     void OnHoldCompleted(int count)
     {
+        if (count >= 5)
+        {
+            if (GameAudio.Instance != null)
+                GameAudio.Instance.PlayFloorboardPop(transform.position);
+            Finish();
+            return;
+        }
+
+        if (GameAudio.Instance != null)
+            GameAudio.Instance.PlayFloorboardStrain(transform.position);
+
         if (PlayerInteractor.Instance == null)
             return;
 
@@ -46,8 +57,6 @@ public class PryFloorboard : MonoBehaviour
             PlayerInteractor.Instance.ShowMessage("Is this hopeless? I'm never getting out of here.");
         else if (count == 4)
             PlayerInteractor.Instance.ShowMessage("The board groans, but it's still stuck.");
-        else if (count >= 5)
-            Finish();
     }
 
     void Finish()

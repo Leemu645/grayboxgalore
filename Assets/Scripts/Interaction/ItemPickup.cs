@@ -27,6 +27,10 @@ public class ItemPickup : MonoBehaviour
             if (PlayerInteractor.Instance != null && !string.IsNullOrEmpty(alreadyCarryingMessage))
                 PlayerInteractor.Instance.ShowMessage(alreadyCarryingMessage);
         }
+        else if (GameAudio.Instance != null)
+        {
+            GameAudio.Instance.PlayPickup();
+        }
 
         gameObject.SetActive(false);
     }
