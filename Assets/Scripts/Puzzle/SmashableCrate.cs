@@ -22,6 +22,8 @@ public class SmashableCrate : MonoBehaviour
         if (splinters != null)
             splinters.SetActive(true);
 
+        if (GameAudio.Instance != null)
+            GameAudio.Instance.PlayCrateSmash(transform.position);
         PlayerInteractor.Instance.ShowMessage("The box breaks into splinters.");
         gameObject.SetActive(false);
     }

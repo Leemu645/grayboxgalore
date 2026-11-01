@@ -23,6 +23,7 @@ public class HookMinigame : MonoBehaviour
     JailKeyPuzzle puzzle;
     bool playing;
     bool hooked;
+    float nextScratchTime;
     Vector2 tipPosition;
     Vector2 tipVelocity;
     Vector2 keyPosition;
@@ -41,6 +42,7 @@ public class HookMinigame : MonoBehaviour
 
         playing = true;
         hooked = false;
+        nextScratchTime = 0f;
         tipVelocity = Vector2.zero;
         if (panel.rect.width < 10f)
         {
@@ -144,6 +146,14 @@ public class HookMinigame : MonoBehaviour
             {
                 hooked = true;
                 status.text = "Hooked. Ease it over to the right edge.";
+                if (GameAudio.Instance != null)
+                    GameAudio.Instance.PlayHookTick();
+            }
+            else if (speed > 140f && Time.time >= nextScratchTime)
+            {
+                nextScratchTime = Time.time + 0.12f;
+                if (GameAudio.Instance != null)
+                    GameAudio.Instance.PlayHookTick();
             }
         }
         else
@@ -154,11 +164,19 @@ public class HookMinigame : MonoBehaviour
             {
                 hooked = false;
                 status.text = "It slipped off. Hook the ring again.";
+                if (GameAudio.Instance != null)
+                    GameAudio.Instance.PlayHookScratch();
             }
             else if (tipPosition.x >= panel.rect.xMax - 100f)
             {
                 End(true);
                 return;
+            }
+            else if (speed > 40f && Time.time >= nextScratchTime)
+            {
+                nextScratchTime = Time.time + 0.16f;
+                if (GameAudio.Instance != null)
+                    GameAudio.Instance.PlayHookScratch();
             }
         }
 
@@ -182,8 +200,13 @@ public class HookMinigame : MonoBehaviour
 
         PlayerControl.Resume();
 
-        if (success && puzzle != null)
-            puzzle.TakeFromMinigame();
+        if (success)
+        {
+            if (GameAudio.Instance != null)
+                GameAudio.Instance.PlayHookSuccess();
+            if (puzzle != null)
+                puzzle.TakeFromMinigame();
+        }
 
         puzzle = null;
     }

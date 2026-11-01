@@ -23,6 +23,8 @@ public class FlashlightPickup : MonoBehaviour
         flashlight.Give();
         if (Inventory.Instance != null)
             Inventory.Instance.Add(ItemId.Flashlight);
+        if (GameAudio.Instance != null)
+            GameAudio.Instance.PlayPickup();
         gameObject.SetActive(false);
     }
 }

@@ -56,6 +56,34 @@ Running the menu again replaces the basement scene. It does not delete the playe
 
 The carried beam is created under the player's camera when you press Play. Range, cone, color, shadows, and flicker are on the **Flashlight** component. Inventory, hold-to-use, and item checks are separate scripts so later puzzles (an enemy, hiding, a game over) can reuse them.
 
+## Sound
+
+Rebuild the basement after pulling this change (**Tools → Gray Box Galore → Build Basement Scene**). An older saved `Basement` scene does not contain the audio object.
+
+Select **Audio** in the hierarchy. **Game Audio → Master Volume** scales every sound, including the room tone and the furnace. It starts at `0.85`. The room tone is a flat loop on that same object, volume `0.16`, so it stays under the footsteps. **Furnace → FurnaceSound** is a 3D loop: loud beside the furnace, gone by about 8 meters.
+
+What you should hear:
+
+| Action | Sound |
+| --- | --- |
+| Walk / sprint | Wood footsteps. Sprint steps come faster. Pitch wobbles a little. |
+| Jump / land | A short lift, then a thud if you actually fell. |
+| Each finished pry | A creak. The fifth hold pops the board loose. |
+| Pick up an item | A small take. |
+| Plank on the jail key | A jingle as it leaves the table. The second prod is a skid. |
+| Plank on the jail box | A smash. |
+| Axe swing | A whoosh, then a wood hit on crates and boards, or a hard thunk on stone and metal. |
+| F | A click on, and a different click off. |
+| Jail key in the lock | The lock turns, then the bars slide. The other key, or empty hands, rattles. |
+| Pull the bars shut | The same slide. |
+| Closet key on the closet | A door creak. Any other item rattles. |
+| Plank or splinter in the furnace | A catch, then crackle for the ten seconds it burns. |
+| Hook game | Ticks while you chase the ring, a scratch once it is hooked, a clink when it reaches the edge. |
+
+Where the files came from, and which ones are synthesized placeholders, is in `Assets/Audio/CREDITS.md`. Unity creates the `.meta` files for those clips on import. You do not need to author them.
+
+`GameAudio` is the shared helper: `PlayAt` for a 3D one-shot, `Play2D` for a flat one, and `BeginLoop` / `EndLoop` for a loop stuck to an object. `PlayFootstep` and `PlayStinger` are there for a later enemy. Stingers are an empty list until that enemy has clips.
+
 ## Optional: a simpler test room
 
 The steps below build a bright practice room in `SampleScene` by hand. You do not need them to play the basement.

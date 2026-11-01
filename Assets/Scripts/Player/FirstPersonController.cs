@@ -80,6 +80,9 @@ public class FirstPersonController : MonoBehaviour
     float pitch;
     float kickPitch;
     float jumpBuffer;
+    float stepTimer;
+    float airborneTime;
+    float timeAlive;
     bool inputReady;
     bool cursorLocked;
     bool suppressPointerLook;
@@ -166,6 +169,7 @@ public class FirstPersonController : MonoBehaviour
             return;
 
         // CharacterController is meant to be moved from Update, not FixedUpdate.
+        timeAlive += Time.deltaTime;
         UpdateCursor();
         Look();
         Move();
@@ -290,6 +294,9 @@ public class FirstPersonController : MonoBehaviour
         // isGrounded is only true after a Move that touched the ground, so we
         // still call Move when the player is standing still.
         bool grounded = controller.isGrounded;
+        // Capture this before the grounded clamp. A landing still has the fall
+        // speed. Standing still has already been clamped to a small value.
+        float fallSpeed = verticalVelocity;
         if (grounded && verticalVelocity < 0f)
             verticalVelocity = -2f;
 
@@ -300,10 +307,12 @@ public class FirstPersonController : MonoBehaviour
 
         // A press a fraction of a second before landing still counts. Without
         // this, jump often does nothing when you press it as you touch down.
+        bool jumped = false;
         if (grounded && jumpBuffer > 0f)
         {
             verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravityAccel);
             jumpBuffer = 0f;
+            jumped = true;
         }
         else if (jumpBuffer > 0f)
         {
@@ -328,5 +337,43 @@ public class FirstPersonController : MonoBehaviour
         Vector3 velocity = wish * speed;
         velocity.y = verticalVelocity;
         controller.Move(velocity * Time.deltaTime);
+
+        // The first moments of play are the capsule settling onto the boards.
+        // That is not a landing. A real landing also skips the footstep that frame
+        // so the thud is not stacked on a step.
+        bool landed = timeAlive > 0.4f && grounded && airborneTime > 0.12f && fallSpeed < -4f;
+        if (landed && GameAudio.Instance != null)
+            GameAudio.Instance.PlayLand(transform.position);
+
+        if (jumped)
+        {
+            airborneTime = 0.2f;
+            if (GameAudio.Instance != null)
+                GameAudio.Instance.PlayJump();
+        }
+        else if (grounded)
+        {
+            airborneTime = 0f;
+        }
+        else
+        {
+            airborneTime += Time.deltaTime;
+        }
+
+        Vector3 flat = new Vector3(velocity.x, 0f, velocity.z);
+        if (grounded && !jumped && !landed && flat.sqrMagnitude > 0.4f)
+        {
+            stepTimer -= Time.deltaTime;
+            if (stepTimer <= 0f)
+            {
+                if (GameAudio.Instance != null)
+                    GameAudio.Instance.PlayFootstep(transform.position, sprinting);
+                stepTimer = sprinting ? 0.31f : 0.46f;
+            }
+        }
+        else
+        {
+            stepTimer = Mathf.Min(stepTimer, 0.12f);
+        }
     }
 }

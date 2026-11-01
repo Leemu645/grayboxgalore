@@ -59,6 +59,8 @@ public class JailDoor : MonoBehaviour
         moving = true;
         if (handleCollider != null)
             handleCollider.enabled = true;
+        if (GameAudio.Instance != null)
+            GameAudio.Instance.PlayBarsSlide(SoundPoint());
     }
 
     public void RequestClose()
@@ -76,5 +78,12 @@ public class JailDoor : MonoBehaviour
         wantsOpen = false;
         moving = true;
         PlayerInteractor.Instance.ShowMessage("I pull the bars shut.");
+        if (GameAudio.Instance != null)
+            GameAudio.Instance.PlayBarsSlide(SoundPoint());
+    }
+
+    Vector3 SoundPoint()
+    {
+        return handleCollider != null ? handleCollider.transform.position : transform.position;
     }
 }

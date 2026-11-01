@@ -22,6 +22,7 @@ public static class BasementSceneBuilder
     const string PlayerPrefabPath = "Assets/Prefabs/Player.prefab";
     const string InputActionsPath = "Assets/InputSystem_Actions.inputactions";
     const string VolumeProfilePath = "Assets/Settings/SampleSceneProfile.asset";
+    const string AudioFolder = "Assets/Audio";
 
     // Interior size. The walkable floor is this wide and deep. Walls sit just outside it.
     const float HalfWidth = 6f;
@@ -71,7 +72,7 @@ public static class BasementSceneBuilder
         Transform lighting = Group("Lighting");
 
         BuildStructure(structure, palette);
-        BuildProps(props, palette);
+        Transform furnace = BuildProps(props, palette);
         BuildJail(jail, palette);
         BuildFlashlightPickup(jail, palette);
         BuildStairs(stairs, palette);
@@ -88,6 +89,7 @@ public static class BasementSceneBuilder
         axeObject.FindProperty("headMaterial").objectReferenceValue = palette.metal;
         axeObject.ApplyModifiedPropertiesWithoutUndo();
         BuildInteractionUi(player, actions);
+        BuildAudio(furnace);
 
         EditorSceneManager.MarkSceneDirty(scene);
         bool saved = EditorSceneManager.SaveScene(scene, ScenePath);
@@ -108,7 +110,7 @@ public static class BasementSceneBuilder
         Debug.Log("Built " + ScenePath + " and added it to Build Settings. Press Play to walk the basement.");
         EditorUtility.DisplayDialog(
             "Basement built",
-            "Assets/Scenes/Basement is open.\n\nYou start inside the jail. Hold E on the loose floorboard five times, then follow SETUP.md to get out.\n\nThe stair door at the top of the stairs is still sealed.",
+            "Assets/Scenes/Basement is open.\n\nYou start inside the jail. Hold E on the loose floorboard five times, then follow SETUP.md to get out.\n\nThe stair door at the top of the stairs is still sealed.\n\nSounds are included. Master volume is on the Audio object.",
             "OK");
     }
 
@@ -150,9 +152,9 @@ public static class BasementSceneBuilder
         Cylinder(parent, "PipeB", new Vector3(1.4f, WallHeight - 0.42f, -1.2f), new Vector3(0.06f, HalfWidth * 0.7f, 0.06f), palette.metal, Quaternion.Euler(0f, 0f, 90f), false);
     }
 
-    static void BuildProps(Transform parent, Palette palette)
+    static Transform BuildProps(Transform parent, Palette palette)
     {
-        BuildFurnace(parent, palette, new Vector3(-4.65f, 0f, 1.9f));
+        Transform furnace = BuildFurnace(parent, palette, new Vector3(-4.65f, 0f, 1.9f));
         // Rotated 90 degrees so the long side runs away from the bars and the
         // doorway stays clear. The near end is still a short reach through the bars.
         Transform bench = BuildWorkbench(parent, palette, new Vector3(2.4f, 0f, 4.1f));
@@ -174,9 +176,10 @@ public static class BasementSceneBuilder
         GameObject tank = Cylinder(heater, "Tank", new Vector3(0f, 0.7f, 0f), new Vector3(0.7f, 0.7f, 0.7f), palette.metal);
         SetInteractable(tank, "Heater", "The tank is cold. It hasn't been lit in a long time.");
         Cylinder(heater, "Vent", new Vector3(0f, 1.55f, 0f), new Vector3(0.12f, 0.2f, 0.12f), palette.rust);
+        return furnace;
     }
 
-    static void BuildFurnace(Transform parent, Palette palette, Vector3 origin)
+    static Transform BuildFurnace(Transform parent, Palette palette, Vector3 origin)
     {
         Transform root = new GameObject("Furnace").transform;
         root.SetParent(parent, false);
@@ -193,6 +196,7 @@ public static class BasementSceneBuilder
         Cylinder(root, "Flue", new Vector3(-0.15f, 1.7f, -0.05f), new Vector3(0.18f, 0.45f, 0.18f), palette.metal);
         // Continues up into the ceiling so the furnace is tied to the room, not floating.
         Cylinder(root, "CeilingDuct", new Vector3(-0.15f, 3.05f, -0.05f), new Vector3(0.14f, 0.95f, 0.14f), palette.metal);
+        return root;
     }
 
     static Transform BuildWorkbench(Transform parent, Palette palette, Vector3 origin)
@@ -1044,6 +1048,109 @@ public static class BasementSceneBuilder
             scenes.Add(new EditorBuildSettingsScene(scenePath, true));
 
         EditorBuildSettings.scenes = scenes.ToArray();
+    }
+
+    static void BuildAudio(Transform furnace)
+    {
+        GameObject root = new GameObject("Audio");
+        GameAudio audio = root.AddComponent<GameAudio>();
+        SerializedObject serialized = new SerializedObject(audio);
+        AssignClips(serialized, "footstepWood",
+            "footstep_wood_01.ogg",
+            "footstep_wood_02.ogg",
+            "footstep_wood_03.ogg",
+            "footstep_wood_04.ogg",
+            "footstep_wood_05.ogg",
+            "footstep_wood_06.ogg",
+            "footstep_wood_07.ogg");
+        AssignClip(serialized, "jump", "jump.ogg");
+        AssignClip(serialized, "land", "land.ogg");
+        AssignClips(serialized, "floorboardStrain", "creak_01.ogg", "creak_02.ogg", "creak_03.ogg");
+        AssignClip(serialized, "floorboardPop", "board_pop.ogg");
+        AssignClip(serialized, "pickup", "pickup.ogg");
+        AssignClip(serialized, "keyJingle", "key_jingle.ogg");
+        AssignClip(serialized, "keySkid", "key_skid.wav");
+        AssignClip(serialized, "crateSmash", "crate_smash.ogg");
+        AssignClips(serialized, "axeWhoosh", "axe_whoosh_01.ogg", "axe_whoosh_02.ogg");
+        AssignClips(serialized, "axeHitWood", "hit_wood_01.ogg", "hit_wood_02.ogg", "hit_wood_03.ogg");
+        AssignClips(serialized, "axeHitHard", "hit_hard_01.ogg", "hit_hard_02.ogg");
+        AssignClip(serialized, "flashlightOn", "flashlight_on.ogg");
+        AssignClip(serialized, "flashlightOff", "flashlight_off.ogg");
+        AssignClips(serialized, "lockUnlock", "lock_unlock_01.ogg", "lock_unlock_02.ogg");
+        AssignClip(serialized, "lockRattle", "lock_rattle.wav");
+        AssignClip(serialized, "barsSlide", "bars_slide.wav");
+        AssignClips(serialized, "closetCreak", "closet_open_01.ogg", "closet_open_02.ogg");
+        AssignClip(serialized, "catchFire", "fire_ignite.wav");
+        AssignClip(serialized, "fireCrackle", "fire_crackle.wav");
+        AssignClip(serialized, "hookTick", "hook_tick.ogg");
+        AssignClip(serialized, "hookScratch", "creak_03.ogg");
+        AssignClip(serialized, "hookSuccess", "hook_success.ogg");
+        SerializedProperty master = serialized.FindProperty("masterVolume");
+        if (master != null)
+            master.floatValue = 0.85f;
+        serialized.ApplyModifiedPropertiesWithoutUndo();
+
+        // Flat room tone. Kept quiet. GameAudio's master volume scales it with everything else.
+        AudioSource bed = root.AddComponent<AudioSource>();
+        ConfigureLoop(bed, Clip("ambient_basement.wav"), 0.16f, 0f, 1f, 5f);
+
+        if (furnace == null)
+            return;
+
+        GameObject furnaceSound = new GameObject("FurnaceSound");
+        furnaceSound.transform.SetParent(furnace, false);
+        furnaceSound.transform.localPosition = new Vector3(0.15f, 0.7f, 0.1f);
+        AudioSource roar = furnaceSound.AddComponent<AudioSource>();
+        ConfigureLoop(roar, Clip("furnace_roar.wav"), 0.55f, 1f, 1.5f, 8f);
+    }
+
+    static void ConfigureLoop(AudioSource source, AudioClip clip, float volume, float spatialBlend, float minDistance, float maxDistance)
+    {
+        source.clip = clip;
+        source.loop = true;
+        source.playOnAwake = true;
+        source.volume = volume;
+        source.spatialBlend = spatialBlend;
+        source.dopplerLevel = 0f;
+        source.rolloffMode = AudioRolloffMode.Linear;
+        source.minDistance = minDistance;
+        source.maxDistance = Mathf.Max(minDistance + 0.1f, maxDistance);
+        source.priority = spatialBlend > 0.5f ? 80 : 48;
+    }
+
+    static void AssignClip(SerializedObject serialized, string propertyName, string fileName)
+    {
+        SerializedProperty property = serialized.FindProperty(propertyName);
+        if (property == null)
+        {
+            Debug.LogError("GameAudio has no field named " + propertyName + ".");
+            return;
+        }
+
+        property.objectReferenceValue = Clip(fileName);
+    }
+
+    static void AssignClips(SerializedObject serialized, string propertyName, params string[] fileNames)
+    {
+        SerializedProperty property = serialized.FindProperty(propertyName);
+        if (property == null || !property.isArray)
+        {
+            Debug.LogError("GameAudio has no clip array named " + propertyName + ".");
+            return;
+        }
+
+        property.arraySize = fileNames.Length;
+        for (int i = 0; i < fileNames.Length; i++)
+            property.GetArrayElementAtIndex(i).objectReferenceValue = Clip(fileNames[i]);
+    }
+
+    static AudioClip Clip(string fileName)
+    {
+        string path = AudioFolder + "/" + fileName;
+        AudioClip clip = AssetDatabase.LoadAssetAtPath<AudioClip>(path);
+        if (clip == null)
+            Debug.LogError("Missing audio clip at " + path + ". See Assets/Audio/CREDITS.md.");
+        return clip;
     }
 
     struct Palette
