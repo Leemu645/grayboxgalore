@@ -14,10 +14,12 @@ This project uses the **Input System** package only (Project Settings → Player
 | Sprint | Hold Left Shift | Click the left stick |
 | Interact | E, or left click | North button (Y on Xbox, Triangle on PlayStation) |
 | Flashlight | F, after you pick one up | Right bumper |
+| Choose an item | Number keys 1–6, or the scroll wheel | |
+| Pry a loose board | Hold E until the bar fills. Do this 5 times | Hold the north button |
 | Release the cursor | Escape | Start |
 | Lock the cursor again | Click in the Game view | |
 
-The cursor locks and hides when you press Play. Press Escape if you need the mouse back for the editor.
+The cursor locks and hides when you press Play. Press Escape if you need the mouse back for the editor. During the key-hook game the mouse is free on purpose. Escape closes that game and locks the cursor again.
 
 You will not see the capsule from the game camera, because the camera sits inside it. The capsule is visible in the Scene view, which makes the player easy to find.
 
@@ -31,20 +33,28 @@ The basement is not saved in the project until you build it. An editor script cr
 4. When the dialog says the basement is built, you are looking at `Assets/Scenes/Basement`. It is also added to **File → Build Settings**.
 5. Click **Play**, then click the Game view once so the mouse and keyboard reach the game.
 
-The room is dark on purpose. A bare bulb hangs near the middle, the furnace has a small orange glow, and a weak light sits over the bars. You should still be able to see the floor, the props, and both ends of the room.
+You start **inside the jail**, looking at the bars. The room beyond is dark: a bare bulb, a furnace glow, and a weak light over the bars. The floor is wooden boards. A hotbar at the bottom lists what you are carrying. The highlighted slot is the item you are using. Number keys or the scroll wheel change it.
 
-- The jail is ahead of where you spawn. The bars and the barred door are solid. You cannot walk through them. Look at the brass lock and press **E** (or left click). The screen says **You need a key** for a couple of seconds. A small dot is the crosshair. While you are looking at the lock it also says **E: Interact**.
-- A flashlight lies on the floor just in front of those bars, lens toward you, with a faint warm glint. Look at it until the prompt says **E: Pick up flashlight**, then press **E**. The flashlight disappears from the floor and the screen says you picked it up. Press **F** (or the right bumper) to turn the beam on and off. It starts off. Point it at a wall, the bars, or the stairs. **Flicker** on the player's Flashlight component is off unless you turn it on.
-- Turn around. The stairs are behind you, between two walls. Walk up them onto the landing. Look at the door and press **E**. The screen says **It's sealed shut**. There is nothing past the door.
-- Escape frees the cursor. Click the Game view to lock it again. Interaction only works while the cursor is locked.
+### Solution, in order
 
-The objects in the scene are grouped under **Structure**, **Props**, **Jail** (bars, lock, and the flashlight on the floor), **Stairs**, **Lighting**, and **Player**. The carried beam is created under the player's camera when you press Play. Materials are saved in `Assets/Materials` (names starting with `Basement`).
+1. Look down at the loose floorboard in the cell. The prompt says **Hold: Pry the board**. Hold **E** until the bar under the crosshair fills. Let go and do it again. You need **five** full holds.
+   - After the first: "It looks like you can pull it out, but you're not sure."
+   - After the third: "Is this hopeless? I'm never getting out of here."
+   - After the fifth the board comes off, a **Plank** is in your inventory, and the line is "I can't believe that worked. But why would there be a key here?" A closet key is lying in the gap.
+2. Press **E** on that key. **Closet Key** is added and selected.
+3. The wooden box is in the cell, against the bars. With **Plank** selected (press the number on its slot), look at the box and press **E**. It breaks into splinters.
+4. Press **E** on a splinter. **Splinter** is added.
+5. Through the bars, a long table sits against the jail with a brass key on it. Select the **Plank** and press **E** while looking at that key. It falls onto the floor just outside the bars. Press **E** on it again with the plank still selected. It is knocked farther into the room and the screen says: "FUCK! I was so close, what the fuck do I do now?"
+6. Select the **Splinter** and press **E** on that far key. A hook game opens and the mouse is free. Move slowly. The splinter tip wobbles. Put the tip in the dark hole of the ring, then drag the hooked key to the strip on the right. A hard jerk drops it and you hook it again. **Escape** cancels and leaves the key on the floor so you can retry. Success puts **Jail Key** in the inventory.
+7. Select **Jail Key**, look at the lock on the bars, and press **E**. The barred door slides open. You can walk out. Without the jail key the lock still says "You need a key".
+8. The closet is against the east wall, doors facing the room. Select **Closet Key**, look at a closet door, and press **E**. The doors swing open. Look at the axe inside and press **E**.
+9. A flashlight is on the floor outside the cell, to the left of the table as you leave. Press **E** to pick it up, then **F** to toggle the beam. The stair door at the top of the stairs still says "It's sealed shut".
 
-Beam range, cone angle, color, shadows, and flicker are on the **Flashlight** component on Player. The floor object is an **Interactable** whose On Interact event calls **Flashlight Pickup → Collect**. That gives the player the light and hides the pickup. You can reuse those two pieces on a new object: add Flashlight to whoever should hold it, and point another pickup's On Interact event at Collect.
+If you use the wrong item, the line is a hint such as "I can't reach it." or "It's locked." The plank is not used up, so you can hit the box and the table key with the same plank.
 
-To change what the lock or the door says, select it in the Hierarchy and edit **Message** on the **Interactable** component. **On Interact** is there for later (a sound, a real door) and can stay empty.
+Running the menu again replaces the basement scene. It does not delete the player prefab or the scripts.
 
-Running the menu again replaces the basement scene. It will not delete the player prefab or the scripts.
+The carried beam is created under the player's camera when you press Play. Range, cone, color, shadows, and flicker are on the **Flashlight** component. Inventory, hold-to-use, and item checks are separate scripts so later puzzles (an enemy, hiding, a game over) can reuse them.
 
 ## Optional: a simpler test room
 

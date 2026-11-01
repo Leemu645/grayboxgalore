@@ -160,6 +160,10 @@ public class FirstPersonController : MonoBehaviour
 
     void Update()
     {
+        // A mini-game (or a later game-over screen) takes the mouse.
+        if (PlayerControl.Suspended)
+            return;
+
         // CharacterController is meant to be moved from Update, not FixedUpdate.
         UpdateCursor();
         Look();

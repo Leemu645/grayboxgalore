@@ -89,7 +89,7 @@ public class Flashlight : MonoBehaviour
 
     void Update()
     {
-        if (!owned || spot == null)
+        if (PlayerControl.Suspended || !owned || spot == null)
             return;
 
         if (WasTogglePressed())
