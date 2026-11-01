@@ -83,6 +83,13 @@ public class FirstPersonController : MonoBehaviour
     float stepTimer;
     float airborneTime;
     float timeAlive;
+    bool movementLocked;
+    bool facingLocked;
+    bool lookWindow;
+    float windowYaw;
+    float windowPitch;
+    float windowYawHalf = 20f;
+    float windowPitchHalf = 12f;
     bool inputReady;
     bool cursorLocked;
     bool suppressPointerLook;
@@ -247,7 +254,7 @@ public class FirstPersonController : MonoBehaviour
             return;
         }
 
-        if (inputReady)
+        if (inputReady && !facingLocked)
         {
             Vector2 look = lookAction.ReadValue<Vector2>();
 
@@ -272,6 +279,14 @@ public class FirstPersonController : MonoBehaviour
             pitch = Mathf.Clamp(pitch, low, high);
         }
 
+        if (lookWindow)
+        {
+            float yawDelta = Mathf.DeltaAngle(windowYaw, yaw);
+            yawDelta = Mathf.Clamp(yawDelta, -windowYawHalf, windowYawHalf);
+            yaw = windowYaw + yawDelta;
+            pitch = Mathf.Clamp(pitch, windowPitch - windowPitchHalf, windowPitch + windowPitchHalf);
+        }
+
         suppressPointerLook = false;
         kickPitch = Mathf.MoveTowards(kickPitch, 0f, 40f * Time.deltaTime);
         float pitchLow = Mathf.Min(minPitch, maxPitch);
@@ -289,8 +304,52 @@ public class FirstPersonController : MonoBehaviour
         kickPitch = Mathf.Clamp(kickPitch + pitchDegrees, -12f, 12f);
     }
 
+    public Transform View => viewCamera;
+
+    public void SetMovementLocked(bool locked)
+    {
+        movementLocked = locked;
+    }
+
+    public void SetFacingLocked(bool locked)
+    {
+        facingLocked = locked;
+    }
+
+    /// <summary>
+    /// Snap the body and the camera. Used while climbing into a hiding spot.
+    /// </summary>
+    public void Face(float newYaw, float newPitch)
+    {
+        yaw = newYaw;
+        pitch = Mathf.Clamp(newPitch, Mathf.Min(minPitch, maxPitch), Mathf.Max(minPitch, maxPitch));
+    }
+
+    /// <summary>
+    /// Keep look inside a window around the pose from Face. Yaw wraps, so the
+    /// window is measured as a delta from centerYaw.
+    /// </summary>
+    public void SetLookWindow(float centerYaw, float centerPitch, float yawHalf, float pitchHalf)
+    {
+        lookWindow = true;
+        windowYaw = centerYaw;
+        windowPitch = centerPitch;
+        windowYawHalf = Mathf.Max(1f, yawHalf);
+        windowPitchHalf = Mathf.Max(1f, pitchHalf);
+    }
+
+    public void ClearLookWindow()
+    {
+        lookWindow = false;
+        facingLocked = false;
+    }
+
     void Move()
     {
+        // Hiding turns the body collider off and moves the transform itself.
+        if (movementLocked || !controller.enabled)
+            return;
+
         // isGrounded is only true after a Move that touched the ground, so we
         // still call Move when the player is standing still.
         bool grounded = controller.isGrounded;

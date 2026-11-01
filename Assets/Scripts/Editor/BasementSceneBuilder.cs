@@ -89,6 +89,7 @@ public static class BasementSceneBuilder
         axeObject.FindProperty("headMaterial").objectReferenceValue = palette.metal;
         axeObject.ApplyModifiedPropertiesWithoutUndo();
         BuildInteractionUi(player, actions);
+        WireThreat(player, lit);
         BuildAudio(furnace);
 
         EditorSceneManager.MarkSceneDirty(scene);
@@ -292,8 +293,14 @@ public static class BasementSceneBuilder
         root.SetParent(parent, false);
         root.position = origin;
 
-        Box(root, "Frame", new Vector3(0f, 0.22f, 0f), new Vector3(1.15f, 0.28f, 2.05f), palette.wood);
-        Box(root, "Mattress", new Vector3(0f, 0.46f, 0.02f), new Vector3(1.05f, 0.22f, 1.9f), palette.fabric);
+        // Legs and a rail, not a solid block, so there is a gap to crawl into.
+        // The collider on the root still stops you walking through the bed.
+        Box(root, "LegA", new Vector3(-0.48f, 0.17f, -0.88f), new Vector3(0.08f, 0.34f, 0.08f), palette.wood, false);
+        Box(root, "LegB", new Vector3(0.48f, 0.17f, -0.88f), new Vector3(0.08f, 0.34f, 0.08f), palette.wood, false);
+        Box(root, "LegC", new Vector3(-0.48f, 0.17f, 0.88f), new Vector3(0.08f, 0.34f, 0.08f), palette.wood, false);
+        Box(root, "LegD", new Vector3(0.48f, 0.17f, 0.88f), new Vector3(0.08f, 0.34f, 0.08f), palette.wood, false);
+        Box(root, "Rail", new Vector3(0f, 0.36f, 0f), new Vector3(1.08f, 0.06f, 1.95f), palette.wood, false);
+        Box(root, "Mattress", new Vector3(0f, 0.5f, 0.02f), new Vector3(1.05f, 0.18f, 1.9f), palette.fabric);
         Box(root, "Pillow", new Vector3(0f, 0.62f, 0.78f), new Vector3(0.55f, 0.12f, 0.32f), palette.fabric);
         Box(root, "Headboard", new Vector3(0f, 0.7f, 1.0f), new Vector3(1.15f, 0.7f, 0.08f), palette.wood);
         SetInteractable(root.gameObject, "Bed", "The mattress smells like dust and old rain.");
@@ -622,11 +629,30 @@ public static class BasementSceneBuilder
         const float doorHeight = 2.15f;
         float doorCenterY = StairRise + doorHeight * 0.5f;
         float doorZ = -HalfDepth + 0.08f;
-        GameObject door = Box(parent, "SealedDoor", new Vector3(0f, doorCenterY, doorZ), new Vector3(1.05f, doorHeight, 0.08f), palette.wood);
+
+        // The panel swings for the visitor. It has no collider, so it cannot
+        // shove the player. The blocker stays put and keeps the line "It's sealed shut".
+        Transform hinge = new GameObject("DoorHinge").transform;
+        hinge.SetParent(parent, false);
+        hinge.position = new Vector3(-0.525f, StairRise, doorZ);
+        Box(hinge, "SealedDoor", new Vector3(0.525f, doorHeight * 0.5f, 0f), new Vector3(1.05f, doorHeight, 0.08f), palette.wood, false);
+
+        GameObject blocker = new GameObject("SealedBlocker");
+        blocker.transform.SetParent(parent, false);
+        blocker.transform.position = new Vector3(0f, doorCenterY, doorZ);
+        BoxCollider blockerCollider = blocker.AddComponent<BoxCollider>();
+        blockerCollider.size = new Vector3(1.05f, doorHeight, 0.12f);
+        SetInteractable(blocker, "Interact", "It's sealed shut");
+
         Box(parent, "JambLeft", new Vector3(-0.58f, doorCenterY, doorZ + 0.02f), new Vector3(0.08f, doorHeight + 0.08f, 0.1f), palette.wood);
         Box(parent, "JambRight", new Vector3(0.58f, doorCenterY, doorZ + 0.02f), new Vector3(0.08f, doorHeight + 0.08f, 0.1f), palette.wood);
         Box(parent, "Header", new Vector3(0f, StairRise + doorHeight + 0.04f, doorZ + 0.02f), new Vector3(1.24f, 0.1f, 0.1f), palette.wood);
-        SetInteractable(door, "Interact", "It's sealed shut");
+
+        SealedStairDoor sealed = hinge.gameObject.AddComponent<SealedStairDoor>();
+        SerializedObject sealedObject = new SerializedObject(sealed);
+        sealedObject.FindProperty("hinge").objectReferenceValue = hinge;
+        sealedObject.FindProperty("solidBlocker").objectReferenceValue = blockerCollider;
+        sealedObject.ApplyModifiedPropertiesWithoutUndo();
     }
 
     static void BuildLighting(Transform parent, Palette palette)
@@ -1050,6 +1076,103 @@ public static class BasementSceneBuilder
         EditorBuildSettings.scenes = scenes.ToArray();
     }
 
+    static void WireThreat(GameObject player, Shader lit)
+    {
+        ClosetLock closet = Object.FindAnyObjectByType<ClosetLock>();
+        JailDoor jailDoor = Object.FindAnyObjectByType<JailDoor>();
+        JailLock jailLock = Object.FindAnyObjectByType<JailLock>();
+        SealedStairDoor stairDoor = Object.FindAnyObjectByType<SealedStairDoor>();
+        Transform bed = GameObject.Find("Bed") != null ? GameObject.Find("Bed").transform : null;
+        Transform jail = GameObject.Find("Jail") != null ? GameObject.Find("Jail").transform : null;
+
+        Transform closetHide = Marker(closet != null ? closet.transform : player.transform, "ClosetHidePoint", new Vector3(0f, 0.08f, -0.1f), 0f);
+        Transform closetStand = Marker(closet != null ? closet.transform : player.transform, "ClosetStandPoint", new Vector3(0f, 0.08f, 1.65f), 0f);
+        Transform bedHide = Marker(bed != null ? bed : player.transform, "BedHidePoint", new Vector3(0.05f, 0.08f, 0f), 90f);
+        Transform bedStand = Marker(bed != null ? bed : player.transform, "BedStandPoint", new Vector3(1.45f, 0.08f, 0f), 90f);
+
+        GameObject cell = new GameObject("CellVolume");
+        if (jail != null)
+            cell.transform.SetParent(jail, false);
+        BoxCollider cellBox = cell.AddComponent<BoxCollider>();
+        cellBox.isTrigger = true;
+        // Just inside the bars (z = 5.15) through to the north wall. Feet in here,
+        // with the lock back on, count as safe. The doorway itself does not.
+        cellBox.center = new Vector3(0f, 1.3f, 6.56f);
+        cellBox.size = new Vector3(11.4f, 2.6f, 2.56f);
+
+        PlayerHiding hiding = player.AddComponent<PlayerHiding>();
+        SerializedObject hidingObject = new SerializedObject(hiding);
+        hidingObject.FindProperty("body").objectReferenceValue = player.GetComponent<FirstPersonController>();
+        hidingObject.FindProperty("closet").objectReferenceValue = closet;
+        hidingObject.FindProperty("closetHide").objectReferenceValue = closetHide;
+        hidingObject.FindProperty("closetStand").objectReferenceValue = closetStand;
+        hidingObject.FindProperty("bedHide").objectReferenceValue = bedHide;
+        hidingObject.FindProperty("bedStand").objectReferenceValue = bedStand;
+        hidingObject.FindProperty("jailLock").objectReferenceValue = jailLock;
+        hidingObject.FindProperty("cellVolume").objectReferenceValue = cellBox;
+        hidingObject.ApplyModifiedPropertiesWithoutUndo();
+
+        if (bed != null)
+        {
+            Interactable bedUse = bed.GetComponent<Interactable>();
+            if (bedUse == null)
+                bedUse = bed.gameObject.AddComponent<Interactable>();
+            UnityEventTools.AddPersistentListener(bedUse.OnInteract, hiding.RequestBed);
+        }
+
+        Material skin = SaveLit(lit, "BasementEnemy.mat", new Color(0.015f, 0.014f, 0.016f), 0.18f, 0f);
+        Material eyes = SaveEmissive(lit, "BasementEnemyEyes.mat", new Color(0.75f, 0.1f, 0.07f), 1.5f);
+
+        GameObject visitor = new GameObject("Visitor");
+        visitor.transform.position = new Vector3(0f, 1.62f, -7.35f);
+        BasementEnemy enemy = visitor.AddComponent<BasementEnemy>();
+        SerializedObject enemyObject = new SerializedObject(enemy);
+        SetVectors(enemyObject, "stairDown",
+            new Vector3(0f, 1.62f, -7.35f),
+            new Vector3(0f, 1.15f, -5.55f),
+            new Vector3(0f, 0.45f, -3.9f),
+            new Vector3(0f, 0.08f, -2.15f));
+        SetVectors(enemyObject, "browsePoints",
+            new Vector3(-3.5f, 0.08f, 1.05f),
+            new Vector3(2.0f, 0.08f, 2.5f),
+            new Vector3(-3.4f, 0.08f, -3.55f),
+            new Vector3(3.7f, 0.08f, 1.45f),
+            new Vector3(0.3f, 0.08f, -0.4f),
+            new Vector3(-0.3f, 0.08f, 3.35f));
+        enemyObject.FindProperty("barPlaneZ").floatValue = 5.15f;
+        enemyObject.FindProperty("player").objectReferenceValue = player.transform;
+        enemyObject.FindProperty("jailDoor").objectReferenceValue = jailDoor;
+        enemyObject.FindProperty("stairDoor").objectReferenceValue = stairDoor;
+        enemyObject.FindProperty("hiding").objectReferenceValue = hiding;
+        enemyObject.FindProperty("hookGame").objectReferenceValue = player.GetComponent<HookMinigame>();
+        enemyObject.FindProperty("bodyMaterial").objectReferenceValue = skin;
+        enemyObject.FindProperty("eyeMaterial").objectReferenceValue = eyes;
+        enemyObject.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    static Transform Marker(Transform parent, string name, Vector3 localPosition, float yaw)
+    {
+        Transform marker = new GameObject(name).transform;
+        marker.SetParent(parent, false);
+        marker.localPosition = localPosition;
+        marker.localRotation = Quaternion.Euler(0f, yaw, 0f);
+        return marker;
+    }
+
+    static void SetVectors(SerializedObject serialized, string propertyName, params Vector3[] values)
+    {
+        SerializedProperty property = serialized.FindProperty(propertyName);
+        if (property == null || !property.isArray)
+        {
+            Debug.LogError("BasementEnemy has no vector array named " + propertyName + ".");
+            return;
+        }
+
+        property.arraySize = values.Length;
+        for (int i = 0; i < values.Length; i++)
+            property.GetArrayElementAtIndex(i).vector3Value = values[i];
+    }
+
     static void BuildAudio(Transform furnace)
     {
         GameObject root = new GameObject("Audio");
@@ -1085,6 +1208,8 @@ public static class BasementSceneBuilder
         AssignClip(serialized, "hookTick", "hook_tick.ogg");
         AssignClip(serialized, "hookScratch", "creak_03.ogg");
         AssignClip(serialized, "hookSuccess", "hook_success.ogg");
+        AssignClips(serialized, "stingers", "enemy_stinger.wav");
+        AssignClip(serialized, "scream", "enemy_scream.wav");
         SerializedProperty master = serialized.FindProperty("masterVolume");
         if (master != null)
             master.floatValue = 0.85f;

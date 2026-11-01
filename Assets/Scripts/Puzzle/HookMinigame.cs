@@ -191,6 +191,22 @@ public class HookMinigame : MonoBehaviour
             key.anchoredPosition = keyPosition;
     }
 
+    /// <summary>
+    /// Closes the hook game without giving the key and without resuming the player.
+    /// A jumpscare calls this so Resume cannot unfreeze the body underneath it.
+    /// </summary>
+    public void CancelWithoutResume()
+    {
+        if (!playing)
+            return;
+
+        playing = false;
+        hooked = false;
+        if (root != null)
+            root.SetActive(false);
+        puzzle = null;
+    }
+
     void End(bool success)
     {
         playing = false;

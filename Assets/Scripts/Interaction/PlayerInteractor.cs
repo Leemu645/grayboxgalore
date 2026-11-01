@@ -131,6 +131,24 @@ public class PlayerInteractor : MonoBehaviour
             return;
         }
 
+        if (PlayerHiding.Instance != null && PlayerHiding.Instance.BlocksWorldUse)
+        {
+            ShowPrompt(null);
+            UpdateHighlight(null);
+            SetHoldVisible(false);
+            holdTime = 0f;
+            if (PlayerHiding.Instance.CanLeave && promptLabel != null)
+            {
+                promptLabel.gameObject.SetActive(true);
+                promptLabel.text = "E: " + PlayerHiding.Instance.LeavePrompt;
+            }
+
+            bool leave = inputReady && interactAction.WasPressedThisFrame();
+            if (PlayerHiding.Instance.CanLeave && leave)
+                PlayerHiding.Instance.RequestLeave();
+            return;
+        }
+
         bool cursorLocked = Cursor.lockState == CursorLockMode.Locked;
         if (crosshair != null && crosshair.activeSelf != cursorLocked)
             crosshair.SetActive(cursorLocked);

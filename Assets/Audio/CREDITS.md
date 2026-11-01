@@ -97,4 +97,8 @@ These were synthesized in Python (mono, 22050 Hz, 16-bit PCM) because no short C
 | `ambient_basement.wav` | Quiet hum and occasional drips, looped in 2D |
 | `key_skid.wav` | The jail key sliding across the floor |
 | `bars_slide.wav` | The barred door sliding open or shut |
-| `lock_rattle.wav` | Jail lock (and the closet) when the key does not fit |
+| `lock_rattle.wav` | Jail lock (and the closet) when the key does not fit. Also reused for the stair-door handle before the visitor comes down. |
+| `enemy_stinger.wav` | Short sting when the visitor spots you. Placeholder. |
+| `enemy_scream.wav` | Jumpscare yell. Placeholder. |
+
+The visitor's footsteps are the wood set above, played lower and slower through `GameAudio.PlayFootstep`. The stair door reuses the closet creaks.

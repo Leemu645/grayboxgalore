@@ -94,7 +94,7 @@ public class Flashlight : MonoBehaviour
 
     void Update()
     {
-        if (PlayerControl.Suspended || !owned || spot == null)
+        if (PlayerControl.Suspended || HidingBlocks() || !owned || spot == null)
             return;
 
         // F toggles any time the flashlight is owned. The model hides when another
@@ -124,6 +124,11 @@ public class Flashlight : MonoBehaviour
 
         if (Application.isPlaying && spot != null)
             ApplyBeamSettings();
+    }
+
+    static bool HidingBlocks()
+    {
+        return PlayerHiding.Instance != null && PlayerHiding.Instance.BlocksWorldUse;
     }
 
     bool WasTogglePressed()

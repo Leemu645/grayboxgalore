@@ -65,9 +65,12 @@ public class GameAudio : MonoBehaviour
     [SerializeField] AudioClip hookScratch;
     [SerializeField] AudioClip hookSuccess;
 
-    [Header("Later")]
-    [Tooltip("Loud 2D stings for a future enemy. Leave empty until those clips exist.")]
+    [Header("Visitor")]
+    [Tooltip("Played when the visitor spots the player. Index 0 is the spot sting.")]
     [SerializeField] AudioClip[] stingers;
+
+    [Tooltip("The jumpscare yell. Flat and loud.")]
+    [SerializeField] AudioClip scream;
 
     AudioSource[] voices;
     int nextVoice;
@@ -123,10 +126,10 @@ public class GameAudio : MonoBehaviour
     /// A wood footstep at a world position. The player uses the clips on this
     /// component. A later enemy can pass its own set, or null to reuse these.
     /// </summary>
-    public void PlayFootstep(Vector3 position, bool sprint, AudioClip[] clips = null)
+    public void PlayFootstep(Vector3 position, bool sprint, AudioClip[] clips = null, float pitchScale = 1f, float maxDistance = 16f)
     {
         AudioClip[] set = clips != null && clips.Length > 0 ? clips : footstepWood;
-        Play(Pick(set), position, sprint ? 0.5f : 0.36f, 1f, 0.08f);
+        Play(Pick(set), position, sprint ? 0.5f : 0.36f, 1f, 0.08f, pitchScale, maxDistance);
     }
 
     public void PlayJump()
@@ -245,7 +248,12 @@ public class GameAudio : MonoBehaviour
             return;
 
         index = Mathf.Clamp(index, 0, stingers.Length - 1);
-        Play(stingers[index], transform.position, 0.85f, 0f, 0.02f);
+        Play(stingers[index], transform.position, 1f, 0f, 0.02f);
+    }
+
+    public void PlayScream()
+    {
+        Play(scream, transform.position, 1f, 0f, 0.015f);
     }
 
     /// <summary>
@@ -296,7 +304,7 @@ public class GameAudio : MonoBehaviour
         Destroy(source.gameObject);
     }
 
-    void Play(AudioClip clip, Vector3 position, float volume, float spatialBlend, float pitchJitter)
+    void Play(AudioClip clip, Vector3 position, float volume, float spatialBlend, float pitchJitter, float pitchScale = 1f, float maxDistance = 16f)
     {
         if (clip == null || voices == null || masterVolume <= 0.001f)
             return;
@@ -306,7 +314,10 @@ public class GameAudio : MonoBehaviour
         source.clip = clip;
         source.volume = Mathf.Clamp01(volume);
         source.spatialBlend = Mathf.Clamp01(spatialBlend);
-        source.pitch = 1f + Random.Range(-Mathf.Abs(pitchJitter), Mathf.Abs(pitchJitter));
+        source.minDistance = 1.4f;
+        source.maxDistance = Mathf.Max(2f, maxDistance);
+        float jitter = Random.Range(-Mathf.Abs(pitchJitter), Mathf.Abs(pitchJitter));
+        source.pitch = Mathf.Clamp(pitchScale + jitter, 0.2f, 3f);
         source.Play();
     }
 
