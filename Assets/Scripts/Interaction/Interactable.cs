@@ -23,6 +23,12 @@ public class Interactable : MonoBehaviour
 
     public string Message => message;
 
+    /// <summary>
+    /// The event shown as On Interact in the Inspector. Other scripts, and the
+    /// basement builder, hook extra work onto this (the flashlight pickup uses it).
+    /// </summary>
+    public UnityEvent OnInteract => onInteract;
+
     public void Interact()
     {
         onInteract?.Invoke();

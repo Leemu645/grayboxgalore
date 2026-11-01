@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
+using UnityEditor.Events;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -72,9 +73,11 @@ public static class BasementSceneBuilder
         BuildStructure(structure, palette);
         BuildProps(props, palette);
         BuildJail(jail, palette);
+        BuildFlashlightPickup(jail, palette);
         BuildStairs(stairs, palette);
         BuildLighting(lighting, palette);
         GameObject player = PlacePlayer(playerPrefab, actions);
+        AttachFlashlight(player, palette);
         BuildInteractionUi(player, actions);
 
         EditorSceneManager.MarkSceneDirty(scene);
@@ -96,7 +99,7 @@ public static class BasementSceneBuilder
         Debug.Log("Built " + ScenePath + " and added it to Build Settings. Press Play to walk the basement.");
         EditorUtility.DisplayDialog(
             "Basement built",
-            "Assets/Scenes/Basement is open.\n\nPress Play. The jail is in front of you. The stairs and the sealed door are behind you.\n\nLook at the lock or the door and press E, left click, or the gamepad north button.",
+            "Assets/Scenes/Basement is open.\n\nPress Play. The jail is in front of you. A flashlight is on the floor just outside the bars.\n\nLook at it and press E to pick it up, then press F to turn it on. The stairs and the sealed door are behind you.",
             "OK");
     }
 
@@ -461,7 +464,24 @@ public static class BasementSceneBuilder
             camera.backgroundColor = new Color(0.015f, 0.013f, 0.013f);
         }
 
+        // The body capsule sits around the camera. If it casts shadows, the flashlight
+        // beam draws a blob of the player on every wall.
+        foreach (Renderer renderer in player.GetComponentsInChildren<Renderer>())
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+
         return player;
+    }
+
+    static void AttachFlashlight(GameObject player, Palette palette)
+    {
+        Flashlight flashlight = player.GetComponent<Flashlight>();
+        if (flashlight == null)
+            flashlight = player.AddComponent<Flashlight>();
+
+        SerializedObject serialized = new SerializedObject(flashlight);
+        serialized.FindProperty("bodyMaterial").objectReferenceValue = palette.metal;
+        serialized.FindProperty("lensMaterial").objectReferenceValue = palette.glow;
+        serialized.ApplyModifiedPropertiesWithoutUndo();
     }
 
     static void BuildInteractionUi(GameObject player, InputActionAsset actions)
@@ -479,7 +499,7 @@ public static class BasementSceneBuilder
         scaler.matchWidthOrHeight = 0.5f;
 
         GameObject crosshair = CreateCrosshair(canvasObject.transform);
-        Text prompt = CreateLabel(canvasObject.transform, "Prompt", font, 22, new Vector2(0.5f, 0.5f), new Vector2(0f, -36f), new Vector2(420f, 40f));
+        Text prompt = CreateLabel(canvasObject.transform, "Prompt", font, 22, new Vector2(0.5f, 0.5f), new Vector2(0f, -36f), new Vector2(560f, 40f));
         Text message = CreateLabel(canvasObject.transform, "Message", font, 28, new Vector2(0.5f, 0.22f), Vector2.zero, new Vector2(900f, 90f));
         prompt.gameObject.SetActive(false);
         message.gameObject.SetActive(false);
@@ -493,6 +513,43 @@ public static class BasementSceneBuilder
         serialized.FindProperty("promptLabel").objectReferenceValue = prompt;
         serialized.FindProperty("messageLabel").objectReferenceValue = message;
         serialized.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    static void BuildFlashlightPickup(Transform jail, Palette palette)
+    {
+        // Bars are at z = 5.15. This sits on the floor in front of them, on the
+        // player's side, so it can be walked to. The cell behind the bars cannot.
+        Transform root = new GameObject("Flashlight").transform;
+        root.SetParent(jail, false);
+        root.position = new Vector3(0.8f, 0.05f, 4.05f);
+        // LookAt points forward (+Z) at the player, so the glowing lens on that end faces them.
+        root.LookAt(new Vector3(0.8f, 0.05f, 0f));
+
+        // Length of a cylinder is its Y axis. Tilting it 90 degrees on X lays that length along Z.
+        Cylinder(root, "Body", Vector3.zero, new Vector3(0.07f, 0.16f, 0.07f), palette.metal, Quaternion.Euler(90f, 0f, 0f), false);
+        Cylinder(root, "Lens", new Vector3(0f, 0f, 0.18f), new Vector3(0.09f, 0.02f, 0.09f), palette.glow, Quaternion.Euler(90f, 0f, 0f), false);
+
+        BoxCollider pickupCollider = root.gameObject.AddComponent<BoxCollider>();
+        pickupCollider.center = new Vector3(0f, 0.06f, 0f);
+        pickupCollider.size = new Vector3(0.2f, 0.28f, 0.5f);
+
+        GameObject glow = new GameObject("Glow");
+        glow.transform.SetParent(root, false);
+        glow.transform.localPosition = new Vector3(0f, 0.04f, 0.18f);
+        Light glowLight = glow.AddComponent<Light>();
+        glowLight.type = LightType.Point;
+        glowLight.color = new Color(1f, 0.72f, 0.35f);
+        glowLight.useColorTemperature = false;
+        glowLight.intensity = 0.12f;
+        glowLight.range = 1.5f;
+        glowLight.shadows = LightShadows.None;
+        glow.AddComponent<UniversalAdditionalLightData>();
+
+        SetInteractable(root.gameObject, "Pick up flashlight", "You picked up a flashlight. Press F to turn it on.");
+        FlashlightPickup pickup = root.gameObject.AddComponent<FlashlightPickup>();
+        Interactable interactable = root.gameObject.GetComponent<Interactable>();
+        UnityEventTools.AddPersistentListener(interactable.OnInteract, pickup.Collect);
+        EditorUtility.SetDirty(interactable);
     }
 
     static GameObject CreateCrosshair(Transform parent)
@@ -553,6 +610,7 @@ public static class BasementSceneBuilder
             rust = SaveLit(lit, "BasementRust.mat", new Color(0.28f, 0.13f, 0.08f), 0.22f, 0.35f),
             bulb = SaveEmissive(lit, "BasementBulb.mat", new Color(1f, 0.86f, 0.6f), 4f),
             ember = SaveEmissive(lit, "BasementEmber.mat", new Color(1f, 0.35f, 0.08f), 3f),
+            glow = SaveEmissive(lit, "BasementFlashlightGlow.mat", new Color(1f, 0.7f, 0.32f), 0.45f),
         };
     }
 
@@ -716,5 +774,6 @@ public static class BasementSceneBuilder
         public Material rust;
         public Material bulb;
         public Material ember;
+        public Material glow;
     }
 }

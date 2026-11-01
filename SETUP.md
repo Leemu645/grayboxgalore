@@ -13,6 +13,7 @@ This project uses the **Input System** package only (Project Settings → Player
 | Jump | Space | South button (A on Xbox, Cross on PlayStation) |
 | Sprint | Hold Left Shift | Click the left stick |
 | Interact | E, or left click | North button (Y on Xbox, Triangle on PlayStation) |
+| Flashlight | F, after you pick one up | Right bumper |
 | Release the cursor | Escape | Start |
 | Lock the cursor again | Click in the Game view | |
 
@@ -33,10 +34,13 @@ The basement is not saved in the project until you build it. An editor script cr
 The room is dark on purpose. A bare bulb hangs near the middle, the furnace has a small orange glow, and a weak light sits over the bars. You should still be able to see the floor, the props, and both ends of the room.
 
 - The jail is ahead of where you spawn. The bars and the barred door are solid. You cannot walk through them. Look at the brass lock and press **E** (or left click). The screen says **You need a key** for a couple of seconds. A small dot is the crosshair. While you are looking at the lock it also says **E: Interact**.
+- A flashlight lies on the floor just in front of those bars, lens toward you, with a faint warm glint. Look at it until the prompt says **E: Pick up flashlight**, then press **E**. The flashlight disappears from the floor and the screen says you picked it up. Press **F** (or the right bumper) to turn the beam on and off. It starts off. Point it at a wall, the bars, or the stairs. **Flicker** on the player's Flashlight component is off unless you turn it on.
 - Turn around. The stairs are behind you, between two walls. Walk up them onto the landing. Look at the door and press **E**. The screen says **It's sealed shut**. There is nothing past the door.
 - Escape frees the cursor. Click the Game view to lock it again. Interaction only works while the cursor is locked.
 
-The objects in the scene are grouped under **Structure**, **Props**, **Jail**, **Stairs**, **Lighting**, and **Player**. Materials are saved in `Assets/Materials` (names starting with `Basement`).
+The objects in the scene are grouped under **Structure**, **Props**, **Jail** (bars, lock, and the flashlight on the floor), **Stairs**, **Lighting**, and **Player**. The carried beam is created under the player's camera when you press Play. Materials are saved in `Assets/Materials` (names starting with `Basement`).
+
+Beam range, cone angle, color, shadows, and flicker are on the **Flashlight** component on Player. The floor object is an **Interactable** whose On Interact event calls **Flashlight Pickup → Collect**. That gives the player the light and hides the pickup. You can reuse those two pieces on a new object: add Flashlight to whoever should hold it, and point another pickup's On Interact event at Collect.
 
 To change what the lock or the door says, select it in the Hierarchy and edit **Message** on the **Interactable** component. **On Interact** is there for later (a sound, a real door) and can stay empty.
 
