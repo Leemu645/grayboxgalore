@@ -186,7 +186,9 @@ public static class BasementSceneBuilder
         SetInteractable(furnaceBody, "Furnace", "");
         FurnaceFire furnaceFire = furnaceBody.AddComponent<FurnaceFire>();
         UnityEventTools.AddPersistentListener(furnaceBody.GetComponent<Interactable>().OnInteract, furnaceFire.TryLight);
-        Box(root, "Door", new Vector3(0.58f, 0.55f, 0f), new Vector3(0.06f, 0.7f, 0.5f), palette.metal);
+        GameObject furnaceDoor = Box(root, "Door", new Vector3(0.58f, 0.55f, 0f), new Vector3(0.06f, 0.7f, 0.5f), palette.metal);
+        SetInteractable(furnaceDoor, "Furnace", "");
+        UnityEventTools.AddPersistentListener(furnaceDoor.GetComponent<Interactable>().OnInteract, furnaceFire.TryLight);
         Box(root, "Mouth", new Vector3(0.62f, 0.48f, 0f), new Vector3(0.04f, 0.28f, 0.22f), palette.ember, false);
         Cylinder(root, "Flue", new Vector3(-0.15f, 1.7f, -0.05f), new Vector3(0.18f, 0.45f, 0.18f), palette.metal);
         // Continues up into the ceiling so the furnace is tied to the room, not floating.
