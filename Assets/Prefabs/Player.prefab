@@ -72,7 +72,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7f3c1a9e4b2d48c6a0e5f1d8c3b74a92, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  inputActions: {fileID: -3408134720424582009, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  inputActions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   viewCamera: {fileID: 830000002}
   moveSpeed: 5
   sprintSpeed: 8
