@@ -37,9 +37,9 @@ public class PlayerInteractor : MonoBehaviour
     [Min(0.5f)]
     [SerializeField] float interactDistance = 3f;
 
-    [Tooltip("How long the message stays on screen, in seconds.")]
+    [Tooltip("How long a message stays on screen, in seconds. Long enough to read a full sentence.")]
     [Min(0.5f)]
-    [SerializeField] float messageSeconds = 2.5f;
+    [SerializeField] float messageSeconds = 4f;
 
     InputActionAsset runtimeActions;
     InputAction interactAction;
