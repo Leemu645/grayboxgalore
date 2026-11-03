@@ -648,8 +648,8 @@ public static class BasementSceneBuilder
         Box(parent, "JambRight", new Vector3(0.58f, doorCenterY, doorZ + 0.02f), new Vector3(0.08f, doorHeight + 0.08f, 0.1f), palette.wood);
         Box(parent, "Header", new Vector3(0f, StairRise + doorHeight + 0.04f, doorZ + 0.02f), new Vector3(1.24f, 0.1f, 0.1f), palette.wood);
 
-        SealedStairDoor sealed = hinge.gameObject.AddComponent<SealedStairDoor>();
-        SerializedObject sealedObject = new SerializedObject(sealed);
+        SealedStairDoor sealedDoor = hinge.gameObject.AddComponent<SealedStairDoor>();
+        SerializedObject sealedObject = new SerializedObject(sealedDoor);
         sealedObject.FindProperty("hinge").objectReferenceValue = hinge;
         sealedObject.FindProperty("solidBlocker").objectReferenceValue = blockerCollider;
         sealedObject.ApplyModifiedPropertiesWithoutUndo();
